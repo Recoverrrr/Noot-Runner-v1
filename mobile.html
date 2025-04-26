@@ -215,22 +215,22 @@
   font-size: 18px;
   color: #1076b1;
 }
-    /* For small screens (≤600px) */
-@media (max-width: 600px) {
-  #gameContainer {
-    position: absolute;
-    top: 0; left: 0;
-    width: 70vw;               /* make container 70% of viewport width */
-    aspect-ratio: 2 / 1;       /* lock 800×400 → 2:1 ratio */
-    overflow: hidden;
-    z-index: 1;
-    margin: 0 auto;            /* center horizontally if you like */
-  }
+    @media (max-width: 600px) {
+      #gameContainer {
+        position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
+  height: calc(100vh - 60px); /* leave 60px at bottom for controls */
+  overflow: hidden;
+  z-index: 1;
+      }
+      @media (max-width: 600px) {
+  /* remove the fixed width/height if you have them here */
   #gameCanvas {
-    display: block;            /* ditch any inline spacing */
-    width: 100%;               /* fill the container’s width */
-    height: 100%;              /* stretch to container’s height */
-    touch-action: none;
+    display: block;           /* so margins/paddings don’t interfere */
+    width: 100vw;             /* fill the full viewport width */
+    height: auto;             /* height follows width to preserve aspect */
+    aspect-ratio: 800 / 400;  /* CSS‐only way to lock in 2:1 */
   }
 }
       #gameCanvas {
@@ -239,7 +239,8 @@
         height: 100%;
         touch-action: none;
       }
-    
+    }
+
     /* full-screen semi-opaque overlay */
     .overlay {
       position: fixed;
@@ -576,20 +577,7 @@
   <div id="toast" class="toast">Please connect your wallet first.</div>
 
   <script>
-    let purchasedSkins = JSON.parse(
-  localStorage.getItem('purchasedSkins') || '[]'
-);
-const playerImg = new Image();
-playerImg.src = 'assets/penguin.png'; // fallback
-window.addEventListener('skinChange', evt => {
-  const id = evt.detail;
-  playerImg.src = id === 'default'
-    ? 'assets/penguin.png'
-    : `assets/skins/skin${id}.png`;
-});
-window.dispatchEvent(
-  new CustomEvent('skinChange', { detail: equippedSkin })
-);
+    
     // load the last‐equipped skin (or default if none)
 let equippedSkin = localStorage.getItem('equippedSkin') || 'default';
 function applySkin(skinId) {
@@ -613,6 +601,12 @@ let score       = 0;
 
 // 4) …and now paint it
 updateBalanceDisplay();
+
+// load your unlocked‐skins array (or default to an empty array)
+let purchasedSkins = JSON.parse(
+  localStorage.getItem('purchasedSkins') || "[]"
+);
+
 
     // --- Populate Marketplace Grid ---
 const marketplaceGrid = document.getElementById('marketplaceGrid');
@@ -850,7 +844,6 @@ function createSkinItem(id, imgSrc, displayName) {
 window.dispatchEvent(new CustomEvent('skinChange', {
   detail: id
 }));
-
     applySkin(id);
     renderSkins();  // re-draw to update which button is disabled
   });
