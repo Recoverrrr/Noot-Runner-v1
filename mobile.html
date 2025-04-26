@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta 
+    name="viewport" 
+    content="width=device-width, initial-scale=1.0, user-scalable=no"
+  >
+  <title>NOOT Runner – Mobile Edition</title>
+
+  <!-- Ethers.js for MetaMask integration -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+  <!-- Playful font -->
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" 
+    rel="stylesheet"
+  >
+
+  <style>
+    /* place the toonNOOT image bottom-right */
+#giftOverlay .modal .toon-noot {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: 80px;       /* tweak size as you like */
+  height: auto;
+  opacity: 0.85;
+  pointer-events: none;
+}
+    /* wear-skin button */
+.skin-item .wear-btn {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #27ae60;  /* a solid green */
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.skin-item .wear-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+.skin-item .wear-btn:disabled {
+  background-color: #95a5a6;
+  cursor: default;
+}
+
+    .balance-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 16px;
+  color: #FFFFFF;
+  margin-bottom: 12px;  /* space below before the grid */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+.balance-display .balance-icon {
+  width: 20px;
+  height: 20px;
+}
+
+    .toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(50,50,50,0.9);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
+  pointer-events: none;
+  font-family: 'Segoe UI', sans-serif;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+    /* make overlay blur & darken the background */
+#splashOverlay {
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.6);
+}
+
+/* style the splash modal slightly differently if desired */
+.splash-modal {
+    display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /* optionally give it a max-height so children can truly center */
+  /* max-height: 80vh; */
+  background: transparent;    /* let backdrop-filter show through */
+  box-shadow: 0 0 30px rgba(255,255,255,0.7);
+  text-align: center;
+}
+
+/* logo floating + glow */
+.splash-logo {
+  width: 120px;
+  margin-bottom: 16px;
+  animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(1, 158, 231, 0.8));
+}
+
+/* simple up-and-down float */
+@keyframes float {
+  0%,100% { transform: translateY(0) }
+  50%     { transform: translateY(-10px) }
+}
+
+/* splash text styling */
+.splash-text {
+  font-family: 'Luckiest Guy', cursive;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  color: #FFF;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+/* reuse your existing connect button style */
+.connect-btn {
+  font-family: 'Luckiest Guy', cursive;
+  color: #fff;
+  background-color: #1076b1;
+  border: 2px solid rgba(255,255,255,0.8);
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  transition: transform 0.2s;
+}
+.connect-btn:hover {
+  transform: scale(1.05);
+}
+
+/* hide the splash by default once JS removes it */
+.overlay { display: none; }
+
+    /* only size the Skins icon */
+.overlay .modal ul li[data-option="skins"] .menu-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* only size the Information icon */
+.overlay .modal ul li[data-option="info"] .menu-icon {
+  width: 24px;
+  height: 24px;
+}
+
+    .overlay .modal ul li .menu-icon {
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  vertical-align: middle;
+  filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.5));
+  object-fit: contain;
+  transform: translateY(-2px);
+  margin-top: -6px;
+}
+    /* Color the menu items and shift them right */
+.overlay .modal ul li {
+  font-family: 'Luckiest Guy', cursive;  /* keep your theme font */
+  color: #E0F7FA;                       /* change to any hex/RGB color */
+  padding-left: 30px;                   /* moves the text (and makes room for the ❄) */
+  margin-top: 30px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+}
+
+/* If you also want to nudge the snowflake around independently: */
+.overlay .modal ul li::before {
+  left: 8px;    /* move the ❄ closer or farther from the left edge */
+  top: -8px;
+  color: #a0e7ff; /* change the flake color */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+   /* Menu title in Luckiest Guy */
+.overlay .modal h2 {
+  font-family: 'Luckiest Guy', cursive;
+  margin-top: 0;
+  color: #E0F7FA;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* apply Luckiest Guy to the entire list */
+.overlay .modal ul,
+.overlay .modal ul li {
+    color: #FFFFFF;
+  font-family: 'Luckiest Guy', cursive;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* a single snowflake bullet */
+.overlay .modal ul li::before {
+  content: '❄';
+  position: absolute;
+  left: 0;
+  font-size: 18px;
+  color: #1076b1;
+}
+    /* For small screens (≤600px) */
+@media (max-width: 600px) {
+  #gameContainer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 70vw;               /* make container 70% of viewport width */
+    aspect-ratio: 2 / 1;       /* lock 800×400 → 2:1 ratio */
+    overflow: hidden;
+    z-index: 1;
+    margin: 0 auto;            /* center horizontally if you like */
+  }
+  #gameCanvas {
+    display: block;            /* ditch any inline spacing */
+    width: 100%;               /* fill the container’s width */
+    height: 100%;              /* stretch to container’s height */
+    touch-action: none;
+  }
+}
+      #gameCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+    
+    /* full-screen semi-opaque overlay */
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .overlay .modal {
+      background: linear-gradient(135deg, #74b9ff, #dfe6e9);
+      border-radius: 8px;
+      padding: 20px;
+      width: 90%;
+      max-width: 320px;
+      box-sizing: border-box;
+      position: relative;
+      text-align: left;
+      font-size: 16px;
+    }
+    .close-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .overlay ul {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0;
+    }
+    .overlay ul li {
+      margin: 8px 0;
+      padding-left: 16px;
+      position: relative;
+      cursor: pointer;
+    }
+    .overlay ul li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: #1076b1;
+    }
+
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+    }
+    body {
+      background: url('assets/mobileBG14.png') no-repeat center/cover;
+      font-family: 'Luckiest Guy', cursive;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* MetaMask connect button */
+    #connectWalletBtn {
+      position: fixed;
+      top: 56px;
+      left: 130px;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-family: 'Luckiest Guy', cursive;
+      color: #fff;
+      background-color: #1076b1;
+      border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 8px;
+      z-index: 50;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    #connectWalletBtn:hover {
+      transform: scale(1.05);
+    }
+
+    /* bottom control bar */
+    #mobileControls {
+      position: fixed;
+      bottom: 45px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 50;
+    }
+    #mobileControls button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      min-width: 60px;
+      padding: 12px;
+      font-size: 18px;
+      font-family: 'Luckiest Guy', cursive;
+      color: #fff;
+      background: rgba(44, 62, 80, 0.8);
+      border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    #mobileControls button:hover {
+      background: rgba(44, 62, 80, 1);
+    }
+
+    @media (min-width: 601px) {
+      body > * { display: none !important; }
+    }
+    /* marketplace grid */
+.marketplace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+  max-height: 60vh;      /* fits in most screens */
+  overflow-y: auto;      /* vertical scrolling */
+  padding-right: 4px;    /* avoid cutting off scroll bar */
+}
+
+/* each skin slot */
+.marketplace-grid .skin-item {
+  position: relative;
+  cursor: pointer;
+}
+.marketplace-grid .skin-item img {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+/* locked skins look grayed out */
+.marketplace-grid .skin-item.locked img {
+  filter: grayscale(100%) opacity(0.5);
+}
+
+/* smaller columns on really narrow viewports */
+@media (max-width: 400px) {
+  .marketplace-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
+  }
+}
+/* label under each skin */
+.skin-item {
+  text-align: center;
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+}
+/* name in Luckiest Guy */
+.skin-item .skin-name {
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 14px;
+  margin-top: 6px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+/* the green purchase button */
+.skin-item .buy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #2ecc71;
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.skin-item .buy-btn:hover {
+  transform: scale(1.05);
+}
+/* coin icon inside button */
+.skin-item .buy-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+/* make the price label pop */
+.skin-item .skin-price {
+  display: inline-block;               /* shrink-wrap the background */
+  margin-top: 2px;
+  padding: 2px 6px;                    /* room around the text */
+  font-size: 13px;                     /* slightly larger */
+  font-weight: bold;                   /* stand out */
+  font-family: 'Segoe UI', sans-serif; /* your base font */
+  color: #FFFFFF;                      /* pure white */
+  background: rgba(0, 0, 0, 0.6);      /* dark translucent bg */
+  border-radius: 4px;                  /* rounded corners */
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8); /* stronger shadow */
+}
+
+/* specifically for the Marketplace modal */
+#marketplaceOverlay .modal {
+  width: 95vw;            /* almost full‐width on mobile */
+  max-width: none;        /* remove the 320px cap */
+  max-height: 85vh;       /* so it never exceeds the screen */
+  overflow-y: auto;       /* vertical scrolling if needed */
+  padding: 16px;          /* give a little more padding */
+}
+
+/* give a bit more breathing room between slots */
+.marketplace-grid {
+  gap: 12px;              /* increase from 8px */
+}
+
+  </style>
+</head>
+<body>
+    <!-- SPLASH OVERLAY (block all interaction) -->
+<div id="splashOverlay" class="overlay">
+    <div class="modal splash-modal">
+      <img src="assets/desktopLogo.png" alt="Logo" class="splash-logo">
+      <p class="splash-text">
+        Connect your Abstract wallet.<br>
+        Interaction is READ ONLY.<br> NO transactions will be initiated.
+      </p>
+      <button id="splashConnectBtn" class="connect-btn">Connect Wallet</button>
+    </div>
+  </div>
+  
+    <div id="menuOverlay" class="overlay">
+        <div class="modal">
+          <button id="closeMenu" class="close-btn">✕</button>
+          <h2>Menu</h2>
+          <ul>
+            <li data-option="marketplace">
+              Marketplace
+              <img src="assets/marketplaceLogo.png" alt="Marketplace" class="menu-icon">
+            </li>
+            <li data-option="skins">
+              Skins
+              <img src="assets/skinsLogo.png" alt="Skins" class="menu-icon">
+            </li>
+            <li data-option="gift">
+              Gift Carousel
+              <img src="assets/wheelLogo1.png" alt="Gift Carousel" class="menu-icon">
+            </li>
+            <li data-option="info">
+              Information
+              <img src="assets/infoLogo.png" alt="Information" class="menu-icon">
+            </li>
+          </ul>          
+        </div>
+      </div>
+
+  <!-- MetaMask Mobile Connect -->
+  <button id="connectWalletBtn">Connect Wallet</button>
+
+  <!-- Game container -->
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+  </div>  
+
+  <!-- Touch controls: Jump → Menu → Duck -->
+  <div id="mobileControls">
+    <button id="jumpBtn">Jump</button>
+    <button id="menuBtn">☰</button>
+    <button id="duckBtn">Duck</button>
+  </div>
+
+  <!-- Menu Overlay -->
+  <div id="menuOverlay" class="overlay">
+    <div class="modal">
+      <button id="closeMenu" class="close-btn">✕</button>
+      <h2>Menu</h2>
+      <ul>
+        <li data-option="marketplace">Marketplace</li>
+        <li data-option="skins">Skins</li>
+        <li data-option="gift">Gift Carousel</li>
+        <li data-option="info">Information</li>
+      </ul>
+    </div>
+  </div>
+  <!-- Marketplace Overlay -->
+<div id="marketplaceOverlay" class="overlay">
+    <div class="modal">
+      <button class="close-btn">✕</button>
+      <h2>Marketplace</h2>
+      <div id="balanceDisplay" class="balance-display">
+        Balance: <span id="coinBalance">0</span>
+        <img src="assets/coin.png" alt="coin" class="balance-icon">
+      </div>      
+  
+      <!-- grid container -->
+      <div id="marketplaceGrid" class="marketplace-grid"></div>
+    </div>
+  </div>  
+
+<!-- Skins Overlay -->
+<div id="skinsOverlay" class="overlay">
+    <div class="modal">
+      <button class="close-btn">✕</button>
+      <h2>Skins</h2>
+      <div id="skinsGrid" class="marketplace-grid"></div>
+    </div>
+  </div>  
+
+  <!-- Gift Carousel Overlay -->
+  <div id="giftOverlay" class="overlay">
+    <div class="modal">
+      <button class="close-btn">✕</button>
+      <h2>Gift Carousel</h2>
+      <!-- gift carousel UI -->
+      <p>COMING SOON!</p>
+      <!-- BOTTOM-RIGHT IMAGE -->
+    <img src="assets/toonNOOT.png" alt="Toon Noot" class="toon-noot">
+      
+    </div>
+  </div>
+
+<!-- Information Overlay -->
+<div id="infoOverlay" class="overlay">
+    <div class="modal">
+      <button class="close-btn">✕</button>
+      <h2>Information</h2>
+      <ul class="info-list">
+        <li>Tap JUMP to jump.</li>
+        <li>Tap DUCK to duck.</li>
+        <li>The game speeds up the longer you survive.</li>
+        <li>Avoid obstacles to stay alive.</li>
+        <li>Collect coins to increase your score.</li>
+        <li>Total Score = Time survived + Coins collected</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div id="toast" class="toast">Please connect your wallet first.</div>
+
+  <script>
+    let purchasedSkins = JSON.parse(
+  localStorage.getItem('purchasedSkins') || '[]'
+);
+const playerImg = new Image();
+playerImg.src = 'assets/penguin.png'; // fallback
+window.addEventListener('skinChange', evt => {
+  const id = evt.detail;
+  playerImg.src = id === 'default'
+    ? 'assets/penguin.png'
+    : `assets/skins/skin${id}.png`;
+});
+window.dispatchEvent(
+  new CustomEvent('skinChange', { detail: equippedSkin })
+);
+    // load the last‐equipped skin (or default if none)
+let equippedSkin = localStorage.getItem('equippedSkin') || 'default';
+function applySkin(skinId) {
+  // dispatch a custom event your game code can pick up:
+  window.dispatchEvent(new CustomEvent('skinChange', { detail: equippedSkin }));
+}
+
+    // 1) grab the span _before_ you ever call updateBalanceDisplay
+const coinBalanceEl = document.getElementById('coinBalance');
+
+// 2) define the function
+function updateBalanceDisplay() {
+  coinBalanceEl.textContent = playerCoins;
+}
+
+// 3) initialize your coin count from storage…
+// at top of script
+let playerCoins = Number(localStorage.getItem('playerCoins')) || 0;
+let score       = 0;
+
+
+// 4) …and now paint it
+updateBalanceDisplay();
+
+    // --- Populate Marketplace Grid ---
+const marketplaceGrid = document.getElementById('marketplaceGrid');
+  
+// replace these with your real names, in order:
+const skinNames = [
+  'Duck',
+  'Frog',
+  'Cat',
+  'Bunny',
+  'Bear',
+  'Bull',
+  'Tiger',
+  'Shark',
+  'Vacation',
+  'Clown',
+  'Dino',
+  'Keeper',
+  'McDonalds',
+  'FBI',
+  'President',
+  'Knight',
+  'Hero',
+  'Robot',
+  'Alien',
+  'Dragon',
+  'King',
+  'Diamond',
+  'Abstract',
+];
+
+
+// 1. Compute your price array
+const prices = [];
+const start  = 50, end = 800, count = 23;
+const step   = (end - start) / (count - 1);
+
+for (let i = 1; i <= count; i++) {
+  // round to nearest whole coin
+  prices[i] = Math.round(start + (i - 1) * step);
+}
+
+// 2. Now build each slot using prices[i]
+marketplaceGrid.innerHTML = '';  // clear any old content
+for (let i = 1; i <= count; i++) {
+  const unlocked = purchasedSkins.includes(i);
+  const imgSrc   = `assets/skins/skin${i}${unlocked ? '' : 'Locked'}.png`;
+  const price    = prices[i];      // <-- now defined!
+
+  const slot = document.createElement('div');
+  slot.className = 'skin-item' + (unlocked ? '' : ' locked');
+
+  // image
+  const img = document.createElement('img');
+  img.src = imgSrc; img.alt = `Skin ${i}`;
+  slot.appendChild(img);
+
+  // name label
+  const nameLbl = document.createElement('div');
+  nameLbl.className = 'skin-name';
+  nameLbl.textContent = skinNames[i-1] || `Skin ${i}`;
+  slot.appendChild(nameLbl);
+
+  // buy button
+  const buyBtn = document.createElement('button');
+  buyBtn.className = 'buy-btn';
+  buyBtn.innerHTML = `${price} <img src="assets/coin.png" alt="coin">`;
+
+buyBtn.addEventListener('click', () => {
+  if (unlocked) {
+    showToast(`You already own Skin ${i}!`);
+  } else if (playerCoins >= price) {
+    // — your existing purchase logic —
+    playerCoins -= price;
+    localStorage.setItem('playerCoins', playerCoins);
+    purchasedSkins.push(i);
+
+    // write it back out so it sticks across refreshes:
+localStorage.setItem(
+  'purchasedSkins',
+  JSON.stringify(purchasedSkins)
+);
+
+
+    // 1) Update the marketplace slot image
+    img.src = `assets/skins/skin${i}.png`;         // swap out the "Locked" image
+    slot.classList.remove('locked');
+    buyBtn.textContent = 'Owned';
+
+    updateBalanceDisplay();
+    showToast(`Purchased Skin ${i}!`);
+
+    // 2) Refresh the Skins overlay so the new skin appears
+    renderSkins();
+
+    // 3) (optional) celebrate!
+    confetti({ particleCount: 60, spread: 50, origin: { y: 0.3 } });
+  } else {
+    showToast('Not enough coins!');
+  }
+});
+
+
+  slot.appendChild(buyBtn);
+
+  marketplaceGrid.appendChild(slot);
+}
+    // — TRACK WALLET STATE —
+    let walletConnected = false;
+
+    // — ELEMENT REFERENCES —
+    const splashOverlay    = document.getElementById('splashOverlay');
+    const splashConnectBtn = document.getElementById('splashConnectBtn');
+    const toastEl          = document.getElementById('toast');
+    const realConnectBtn   = document.getElementById('connectWalletBtn');
+    const allButtons       = document.querySelectorAll('button, canvas');
+    const menuBtn          = document.getElementById('menuBtn');
+    const menuOverlay      = document.getElementById('menuOverlay');
+    const overlays = {
+      marketplace: document.getElementById('marketplaceOverlay'),
+      skins:       document.getElementById('skinsOverlay'),
+      gift:        document.getElementById('giftOverlay'),
+      info:        document.getElementById('infoOverlay'),
+    };
+
+    // — TOAST FUNCTION —
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      setTimeout(() => toastEl.classList.remove('show'), 2000);
+    }
+
+    // — CONNECT FLOW (both buttons) —
+// — CONNECT & DISCONNECT FLOW —
+async function doConnect() {
+  try {
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = provider.getSigner();
+    const addr = await signer.getAddress();
+    walletConnected = true;
+
+    [splashConnectBtn, realConnectBtn].forEach(btn => {
+      btn.textContent = `${addr.slice(0,6)}…${addr.slice(-4)}`;
+      btn.style.backgroundColor = '#2ecc71';
+    });
+
+    splashOverlay.style.display = 'none';
+  } catch (err) {
+    alert('Connection failed: ' + err.message);
+  }
+}
+
+function doDisconnect() {
+  signer = null;
+  provider = null;
+  walletConnected = false;
+
+  [splashConnectBtn, realConnectBtn].forEach(btn => {
+    btn.textContent = 'Connect Wallet';
+    btn.style.backgroundColor = '#1076b1';
+  });
+  
+ // bring the splash back up
+ splashOverlay.style.display = 'flex';
+}
+
+// — BLOCK ALL INTERACTION UNTIL CONNECTED —
+splashOverlay.style.display = 'flex';
+splashConnectBtn.addEventListener('click', doConnect);
+
+// toggle connect / disconnect on the real button
+realConnectBtn.addEventListener('click', () => {
+  if (!walletConnected) doConnect();
+  else                  doDisconnect();
+});
+
+
+    allButtons.forEach(el => {
+      if (el !== splashConnectBtn && el !== realConnectBtn) {
+        el.addEventListener('click', e => {
+          if (!walletConnected) {
+            e.preventDefault();
+            showToast('Please connect your wallet first.');
+          }
+        });
+        el.addEventListener('touchstart', e => {
+          if (!walletConnected) {
+            e.preventDefault();
+            showToast('Please connect your wallet first.');
+          }
+        }, {passive:false});
+      }
+    });
+
+    // — MENU OPEN / SUB-OVERLAY LOGIC —
+    menuBtn.addEventListener('click', () => {
+      menuOverlay.style.display = 'flex';
+    });
+    menuOverlay.querySelectorAll('li').forEach(item => {
+      item.addEventListener('click', () => {
+        const choice = item.dataset.option;
+        menuOverlay.style.display = 'none';
+        overlays[choice].style.display = 'flex';
+      });
+    });
+    document.querySelectorAll('.overlay .close-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.currentTarget.closest('.overlay').style.display = 'none';
+      });
+    });
+    // --- Populate Skins Grid ---
+    const skinsGrid = document.getElementById('skinsGrid');
+skinsGrid.innerHTML = '';
+
+// helper to create each item
+function createSkinItem(id, imgSrc, displayName) {
+  const slot = document.createElement('div');
+  slot.className = 'skin-item';
+
+  slot.innerHTML = `
+    <img src="${imgSrc}" alt="${displayName}">
+    <div class="skin-name">${displayName}</div>
+  `;
+
+  const btn = document.createElement('button');
+  btn.className = 'wear-btn';
+  btn.textContent = (id === equippedSkin) ? 'Equipped' : 'Wear Skin';
+  if (id === equippedSkin) btn.disabled = true;
+
+  btn.addEventListener('click', () => {
+    equippedSkin = id;
+    localStorage.setItem('equippedSkin', id);
+    // tell the canvas to swap over
+window.dispatchEvent(new CustomEvent('skinChange', {
+  detail: id
+}));
+
+    applySkin(id);
+    renderSkins();  // re-draw to update which button is disabled
+  });
+
+  slot.appendChild(btn);
+  return slot;
+}
+
+// main render function
+function renderSkins() {
+  skinsGrid.innerHTML = '';
+
+  // 1) Default skin
+  skinsGrid.appendChild(
+    createSkinItem('default', 'assets/penguin.png', 'Default')
+  );
+
+  // 2) Every purchased skin
+  purchasedSkins.forEach(i => {
+    const img = `assets/skins/skin${i}.png`;
+    const name = skinNames[i-1] || `Skin ${i}`;
+    skinsGrid.appendChild(
+      createSkinItem(String(i), img, name)
+    );
+  });
+}
+
+// initial draw & apply
+renderSkins();
+applySkin(equippedSkin);
+
+// ——— GAME & CANVAS LOGIC ———
+
+// Canvas & Global Variables
+const canvas = document.getElementById('gameCanvas');
+const ctx    = canvas.getContext('2d');
+const W      = canvas.width;
+const H      = canvas.height;
+
+let gameState      = 'waiting';
+let startTime      = 0;
+let elapsedTime    = 0;
+const baseSpeed    = 12;
+let gameSpeed      = baseSpeed;
+let collisionTimer = 0;
+
+const player = {
+  x: 100, y: 0,
+  normalHeight: 60, duckHeight: 40,
+  width: 60, height: 60,
+  vy: 0, onGround: false, ducking: false
+};
+
+const gravity    = 0.6;
+const jumpForce  = 10;
+const groundHeight = 80;
+ // maximum height the player can reach above ground:
+ const maxJumpHeight = (jumpForce * jumpForce) / (2 * gravity);
+
+let obstacles   = [];
+let coins       = [];
+let clouds      = [];
+let snowflakes  = [];
+let obstacleTimer = 0;
+let coinTimer     = 0;
+
+// Assets
+const penguinImg   = new Image(); penguinImg.src   = 'assets/penguin.png';
+const coinImg      = new Image(); coinImg.src      = 'assets/coin.png';
+const snowPileImg  = new Image(); snowPileImg.src  = 'assets/snowPile.png';
+const icicleObsImg = new Image(); icicleObsImg.src = 'assets/icicleObs.png';
+
+// Snowflakes
+function createInitialSnowflakes() {
+  for (let i = 0; i < 50; i++) {
+    snowflakes.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      radius: Math.random() * 2 + 1,
+      speedY: Math.random() * 0.5 + 0.5,
+      speedX: Math.random() * 0.5 - 0.25
+    });
+  }
+}
+function updateSnowflakes() {
+  snowflakes.forEach(f => {
+    f.y += f.speedY;
+    f.x += f.speedX;
+    if (f.y > H) { f.y = -f.radius; f.x = Math.random() * W; }
+    if (f.x < 0 || f.x > W) f.x = Math.random() * W;
+  });
+}
+function drawSnowflakes() {
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  snowflakes.forEach(f => {
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.radius, 0, Math.PI*2);
+    ctx.fill();
+  });
+}
+
+// Clouds
+function createInitialClouds() {
+  for (let i = 0; i < 5; i++) {
+    clouds.push({
+      x: Math.random() * W,
+      y: Math.random() * (H/2),
+      speed: 0.3 + Math.random() * 0.7,
+      radius: 20 + Math.random() * 20
+    });
+  }
+}
+function updateClouds() {
+  clouds.forEach(c => {
+    c.x -= c.speed;
+    if (c.x + c.radius*2 < 0) {
+      c.x = W + c.radius;
+      c.y = Math.random() * (H/2);
+    }
+  });
+}
+function drawClouds() {
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  clouds.forEach(c => {
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.radius, Math.PI*0.5, Math.PI*1.5);
+    ctx.arc(c.x + c.radius, c.y - c.radius, c.radius, Math.PI, Math.PI*2);
+    ctx.arc(c.x + c.radius*2, c.y, c.radius, Math.PI*1.5, Math.PI*0.5);
+    ctx.fill();
+  });
+}
+
+// Spawning
+function spawnObstacle() {
+  const type = Math.random() < 0.5 ? 'low' : 'high';
+  const obs = { x: W, type };
+  if (type === 'low') {
+    obs.width  = 40;
+    obs.height = 50 + Math.random() * 30;
+    obs.y      = H - groundHeight - obs.height + 5;
+  } else {
+    obs.width  = 40;
+    obs.height = 50;
+    obs.y      = 280 - obs.height;
+  }
+  obstacles.push(obs);
+}
+function spawnCoin() {
+  const size = 40;
+   // compute vertical range: 
+ // groundY   = H - groundHeight
+ // highest Y = groundY - maxJumpHeight - size
+ const groundY      = H - groundHeight;
+ const highestY     = Math.max(0, groundY - maxJumpHeight - size);
+  coins.push({
+    x: W,
+    y: Math.random() * (groundY - size - highestY) + highestY,
+    size,
+    angle: 0
+  });
+}
+
+// Collision
+function checkCollision(a, b) {
+  const bw = b.width || b.size, bh = b.height || b.size;
+  return a.x < b.x + bw &&
+         a.x + a.width > b.x &&
+         a.y < b.y + bh &&
+         a.y + a.height > b.y;
+}
+
+// Input
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if ((gameState==='waiting' || gameState==='gameover') && e.code==='Enter') {
+    initGame();
+  }
+});
+document.addEventListener('keyup',   e => { keys[e.code] = false; });
+
+function handleInput() {
+  if (keys['Space'] && player.onGround) {
+    if (player.ducking) releaseDuck();
+    player.vy = -jumpForce;
+    player.onGround = false;
+  }
+  if ((keys['ShiftLeft']||keys['ShiftRight']) && player.onGround && !player.ducking) {
+    player.ducking = true;
+    player.height = player.duckHeight;
+    player.y = H - groundHeight - player.duckHeight;
+  } else if (!(keys['ShiftLeft']||keys['ShiftRight']) && player.ducking) {
+    releaseDuck();
+  }
+}
+function releaseDuck() {
+  player.ducking = false;
+  player.height = player.normalHeight;
+  player.y = H - groundHeight - player.normalHeight;
+}
+// — after your handleInput() and releaseDuck() definitions —
+
+// grab your mobile control buttons
+const jumpBtn = document.getElementById('jumpBtn');
+const duckBtn = document.getElementById('duckBtn');
+
+// Jump on touchstart
+jumpBtn.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (player.onGround) {
+    keys['Space'] = true;
+    handleInput();      // perform the jump
+    keys['Space'] = false;
+  }
+});
+// (optional) also support a quick tap with mouse
+jumpBtn.addEventListener('mousedown', e => {
+  e.preventDefault();
+  if (player.onGround) {
+    keys['Space'] = true;
+    handleInput();
+    keys['Space'] = false;
+  }
+});
+
+// Duck while you’re holding the button
+duckBtn.addEventListener('touchstart', e => {
+  e.preventDefault();
+  keys['ShiftLeft'] = true;
+  handleInput();       // enter duck state
+});
+duckBtn.addEventListener('touchend', e => {
+  e.preventDefault();
+  keys['ShiftLeft'] = false;
+  handleInput();       // release duck
+});
+// (optional) desktop support
+duckBtn.addEventListener('mousedown', e => {
+  e.preventDefault();
+  keys['ShiftLeft'] = true;
+  handleInput();
+});
+duckBtn.addEventListener('mouseup', e => {
+  e.preventDefault();
+  keys['ShiftLeft'] = false;
+  handleInput();
+});
+
+// Game Loop
+function initGame() {
+  score = 0;
+  startTime = performance.now();
+  elapsedTime = 0;
+  gameSpeed = baseSpeed;
+  player.y = H - groundHeight - player.normalHeight;
+  player.vy = 0;
+  player.onGround = true;
+  player.ducking = false;
+  obstacles = [];
+  coins     = [];
+  clouds    = [];
+  snowflakes= [];
+  obstacleTimer = coinTimer = 0;
+  createInitialClouds();
+  createInitialSnowflakes();
+  gameState = 'playing';
+  requestAnimationFrame(gameLoop);
+}
+// one image object that *we* draw each frame
+const playerImg = new Image();
+playerImg.src = 'assets/penguin.png';  // default
+
+// listen for skinChange events
+window.addEventListener('skinChange', evt => {
+  const skinId = evt.detail;
+  if (skinId === 'default') {
+    playerImg.src = 'assets/penguin.png';
+  } else {
+    playerImg.src = `assets/skins/skin${skinId}.png`;
+  }
+});
+
+function gameLoop() {
+  if (gameState === 'playing') {
+    handleInput();
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);   // only keep looping while playing
+  }
+  else if (gameState === 'collision') {
+    // draw one final frame with the restart prompt
+    draw();
+    // <-- no requestAnimationFrame here, so the old loop stops
+  }
+}
+
+function update() {
+  if (gameState==='playing') {
+    elapsedTime = (performance.now() - startTime)/1000;
+    gameSpeed = baseSpeed + 2*(Math.exp(0.02*elapsedTime)-1);
+
+    player.y += player.vy;
+    player.vy += gravity;
+    if (player.y + player.height > H - groundHeight) {
+      player.y = H - groundHeight - player.height;
+      player.vy = 0;
+      player.onGround = true;
+    }
+
+    if (++obstacleTimer > 90) { spawnObstacle(); obstacleTimer = 0; }
+    if (++coinTimer     >120) { spawnCoin();     coinTimer     = 0; }
+
+    obstacles.forEach(o => o.x -= gameSpeed);
+    coins.forEach(c => { c.x -= gameSpeed; c.angle = (c.angle+0.1)%(Math.PI*2); });
+    updateClouds();
+    updateSnowflakes();
+
+    for (let obs of obstacles) {
+      if (checkCollision(player, obs)) {
+        gameState = 'collision';
+        return;
+      }
+    }
+    for (let i=0; i<coins.length; i++) {
+      if (checkCollision(player, coins[i])) {
+           // new:
+score++;
+playerCoins += 1;                   // ← ADD one to the existing total
+localStorage.setItem('playerCoins', playerCoins);
+updateBalanceDisplay();
+coins.splice(i--, 1);
+
+  }
+    }
+  }
+}
+
+function draw() {
+  ctx.clearRect(0,0,W,H);
+
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#74b9ff');
+  grad.addColorStop(1,'#dfe6e9');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  drawSnowflakes();
+  drawClouds();
+
+  ctx.fillStyle = '#ecf0f1';
+  ctx.fillRect(0,H-groundHeight,W,groundHeight);
+
+  obstacles.forEach(o => {
+    const img = o.type==='low' ? snowPileImg : icicleObsImg;
+    ctx.drawImage(img, o.x, o.y, o.width, o.height);
+  });
+
+  coins.forEach(c => {
+    ctx.save();
+    ctx.translate(c.x + c.size/2, c.y + c.size/2);
+    ctx.rotate(c.angle);
+    ctx.drawImage(coinImg, -c.size/2, -c.size/2, c.size, c.size);
+    ctx.restore();
+  });
+
+  if (gameState==='collision') {
+    ctx.globalAlpha = 0.8;
+    const jitterX = player.x + (Math.random()*10-5);
+    const jitterY = player.y + (Math.random()*10-5);
+    ctx.drawImage(penguinImg, jitterX, jitterY, player.width, player.height);
+    ctx.globalAlpha = 1;
+        ctx.fillStyle = 'red';
+    ctx.font = "bold 60px sans-serif";
+    ctx.textAlign    = 'center';   // ← center horizontally
+    ctx.textBaseline = 'middle';   // ← center vertically on y-coord
+    ctx.fillText("GAME OVER", W/2, H/2);
+    
+
+        // ★ draw the restart prompt just below it ★
+    ctx.fillStyle    = '#2c3e50';
+    ctx.font         = "20px 'Luckiest Guy', cursive";
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'top';      // y will be top‐aligned for the prompt
+    ctx.fillText("Touch Screen to Restart", W/2, H/2 + 30);
+
+  } else {
+    ctx.drawImage(
+  playerImg,
+  player.x,
+  player.y,
+  player.width,
+  player.height
+);
+  }
+
+  if (gameState==='playing') {
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = "22px sans-serif";
+    ctx.fillText("Coins: "+score, 20, 80);
+    ctx.fillText("Time: "+Math.floor(elapsedTime)+" s", 20, 105);
+  }
+}
+
+// Initial start prompt
+gameState = 'waiting';
+ctx.fillStyle = '#2c3e50';
+ctx.font = "24px sans-serif";
+ctx.textAlign = 'center';
+ctx.fillText("Touch Screen to Play", W/2, H/2);
+// Anywhere after canvas is defined, but before initGame is ever called:
+canvas.addEventListener('touchstart', startOnTouch, {passive:false});
+canvas.addEventListener('mousedown',  startOnTouch);
+
+function startOnTouch(e) {
+  // if we're still waiting, kick off the game
+  if (gameState === 'waiting' || gameState === 'collision') {
+    e.preventDefault();
+    initGame();
+  }
+}
+  </script>
+
+</body>
+</html>

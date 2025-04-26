@@ -1,0 +1,2994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+  <meta charset="UTF-8" />
+  <title>NOOT Runner – Winter Edition</title>
+  
+  <!-- Redirect MetaMask Mobile users -->
+  <script>
+    (function() {
+      const ua = navigator.userAgent || '';
+      const isMobile  = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      const isMetaMask = /MetaMask|DappBrowser/i.test(ua) 
+                         || (window.ethereum && window.ethereum.isMetaMask);
+      if (isMobile && isMetaMask) {
+        // push into the mobile‐optimized page
+        window.location.replace('mobile.html');
+      }
+    })();
+  </script>
+
+  <!-- Insert your desktopLogo.ico here -->
+  <link rel="icon" href="assets/desktopLogo.ico" type="image/x-icon" />
+  <link rel="shortcut icon" href="assets/desktopLogo.ico" type="image/x-icon" />
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+  <!-- Import a fun, playful font from Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <style>
+    /*********************************************************
+     * Force Removal of Blue Underlines or Borders on Images *
+     *********************************************************/
+     /* a downward-pointing arrow using CSS borders */
+     #carouselPointer {
+  /* remove the old bottom‐border triangle */
+  border-bottom: none;
+
+  /* add a top‐border triangle instead */
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 18px solid #be0909;  /* flips it */
+  
+  position: absolute;
+  top: -7px;          /* tweak as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  
+}
+
+     /* ─── match Exit’s size & shape, but use Lucky-Wheel’s gold ─── */
+#spinWheelBtn {
+  background-color: #f1c40f;              /* same gold as your Lucky-Wheel opener */
+  border: 2px solid rgba(255,255,255,0.8);/* white stroke like your other primary buttons */
+  border-radius: 4px;
+  padding: 8px 10px;                      /* same padding as Exit */
+  min-height: 36px;
+  line-height: 1.2;
+  width: 120px;                           /* same width as Exit */
+  font-size: 14px;                        /* match Exit’s text size */
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+  margin-top: 10px;
+}
+#spinWheelBtn:hover {
+  background-color: #d4ac0d;              /* same hover gold as Lucky-Wheel opener */
+  border-color: #fff;
+}
+.carousel-wrapper {
+  position: relative;     /* so #carouselPointer is positioned against this */
+  width: 500px;           /* match your carousel width */
+  height: 120px;
+  margin: 20px auto;      /* center it and preserve your old spacing */
+  overflow: hidden;      /* crucial—lets the arrow show outside the clipped box */
+}
+
+     /* carousel viewport */
+#giftCarouselContainer {
+  width: 500px;                /* match wheel width or desired */
+  height: 100px;               /* adjust for gift image size */
+  border: 3px solid #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* inner strip of gifts */
+#giftCarousel {
+  display: flex;
+  white-space: nowrap;
+  transition: transform 6s ease-out; /* we'll override duration in JS */
+}
+
+/* each gift icon */
+.gift-item {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  margin-right: 10px;
+  margin-top: -103px;
+}
+.prize-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  margin-bottom: 4px;
+}
+.prize-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+     /* Audio toggle button */
+     #game-container #audioToggle {
+  position: absolute;
+  top: 352px;      /* tweak to slide up/down */
+  left:  8px;     /* tweak to slide left/right */
+  width:  40px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 50;     /* above your overlays (they max out around 25) */
+}
+/* glow on selected */
+.market-item.selected {
+  border-color: #f1c40f;               /* match your gold accent */
+  box-shadow: 0 0 12px 4px rgba(241, 196, 15, 0.7);
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+    .market-item img {
+      text-decoration: none !important;
+      border: none !important;
+      outline: none !important;
+    }
+    /* Remove underlines/borders from skins page images */
+    .skin-item img {
+      text-decoration: none !important;
+      border: none !important;
+      outline: none !important;
+    }
+    /* New CSS for Shake Animation */
+    @keyframes shake {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-5px, 0); }
+      40% { transform: translate(5px, 0); }
+      60% { transform: translate(-5px, 0); }
+      80% { transform: translate(5px, 0); }
+      100% { transform: translate(0, 0); }
+    }
+    .shake {
+      animation: shake 0.5s;
+    }
+
+    /* Define the keyframes for the confetti "fall" animation */
+    @keyframes fall {
+      0% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+    }
+    /* General winter gradient background */
+    html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-image:
+    url('assets/nootBG12.png'),
+      linear-gradient(135deg, #74b9ff, #dfe6e9);
+      background-repeat: no-repeat, no-repeat;
+      background-position: bottom center, center center;
+      background-size: cover, cover;
+      image-rendering: auto;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+    header {
+      text-align: center;
+      margin-top: 20px;
+      font-family: 'Luckiest Guy', cursive;
+      color: #2c3e50;
+    }
+    header h1 {
+      font-size: 36px;
+      margin: 0;
+    }
+    header h2 {
+      font-size: 20px;
+      margin: 5px 0 20px 0;
+    }
+    header h2 a {
+      color: #2c3e50;
+      text-decoration: none;
+      border-bottom: 1px dashed #2c3e50;
+    }
+    /* Container for the game */
+    #game-container {
+      position: relative;
+      width: 100vw;
+      max-width: 800px;
+      height: 400px;
+      border: 3px solid #2c3e50;
+      outline: 4px solid #fff;
+      outline-offset: -4px;
+      margin-bottom: 25px;
+      overflow: hidden;
+    }
+    /* Wallet connect overlay */
+    #walletConnectOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 800px;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.9);
+      color: #fff;
+      z-index: 25;
+      animation: fadeInWallet 1s forwards;
+    }
+    @keyframes fadeInWallet {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeOutWallet {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    #walletConnectOverlay h2 {
+      font-family: 'Luckiest Guy', cursive;
+      margin: 0 0 10px 0;
+    }
+    #walletConnectOverlay p {
+      font-size: 14px;
+      margin: 0 0 20px 0;
+    }
+    /* Updated Wallet Connect Overlay Button */
+    #walletConnectOverlay button {
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #2980b9;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    #walletConnectOverlay button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+    }
+    /* Persistent coin display at top-left */
+    #persistentCoins {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+      font-family: 'Luckiest Guy', cursive;
+      color: #fff;
+      z-index: 15;
+      text-shadow: 1px 1px 2px #2c3e50;
+      display: flex;
+      align-items: center;
+      opacity: 0;
+      animation: fadeIn 0.7s ease-in-out forwards;
+    }
+    @keyframes coinBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    #persistentCoins img {
+      width: 28px;
+      height: 28px;
+      margin-right: 8px;
+      animation: coinBounce 1s infinite;
+    }
+    /* Start overlay before game begins */
+    #startOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 800px;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      z-index: 10;
+      padding: 10px;
+      box-sizing: border-box;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-in-out forwards;
+    }
+    /* The game canvas */
+    canvas {
+      background: transparent;
+      border: 3px solid #2c3e50;
+      background-color: rgba(255, 255, 255, 0.1);
+      display: block;
+    }
+    /* Modal overlay for final scores/leaderboard */
+    #modalOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 800px;
+      height: 400px;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      animation: fadeIn 0.5s forwards;
+    }
+    #modalWindow {
+      background: #fff;
+      border: 2px solid #74b9ff;
+      border-radius: 8px;
+      width: 460px;
+      max-width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      padding: 20px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    #modalWindow h2 {
+      font-family: 'Luckiest Guy', cursive;
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    #modalWindow input[type="text"] {
+      padding: 8px;
+      font-size: 16px;
+      margin-top: 10px;
+      width: 70%;
+    }
+    #modalWindow button {
+      padding: 8px 16px;
+      font-size: 16px;
+      margin-top: 10px;
+      background-color: #2980b9;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+    }
+    /* Updated Wallet Connect Button at Top Right */
+    #walletStatusBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 10px 16px;
+      font-size: 16px;
+      background-color: #2980b9;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      z-index: 30;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    #walletStatusBtn:hover {
+      transform: scale(1.05);
+      background-color: #2471a3;
+    }
+    /* Controls area below the game */
+    #controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #controls button {
+      background-color: #2980b9;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 20px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin: 5px;
+    }
+    #controls button:hover {
+      background-color: #2471a3;
+    }
+    /* make the instructions text “float” over your drawn frame */
+#instructions {
+  background: transparent;    /* no solid or frosted BG */
+  border: none;              
+  padding-top: 90px; 
+  padding-left: 75px;                
+  margin: 10px auto;          /* center it under your buttons */
+  width: 520px;               /* tweak this to fit exactly inside your art */
+  max-width: 90%;             
+  color: #fff;                
+  font-size: 15px;
+  font-weight: 600;
+  -webkit-text-stroke: 0.2px rgba(10, 65, 90, 0.8);
+  text-shadow:
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+       -1px -1px 2px rgba(0, 0, 0, 0.5);            
+  line-height: 1.4;           
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+/* style the headline to match your logo/font */
+#instructions h2 {
+  display: none;
+  margin: 0 0 12px;
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 26px;
+  color: #fff;
+  text-shadow: 2px 2px 3px rgba(0,0,0,0.7);
+}
+
+/* strip the default list styling */
+#instructions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* give each line room for a snowflake bullet */
+#instructions ul li {
+  position: relative;
+  padding-left: 28px;
+  margin-bottom: 8px;
+}
+
+/* use a snowflake glyph as the “bullet” */
+#instructions ul li::before {
+  content: '❄';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 18px;
+  color: #74b9ff;  /* your accent color */
+  -webkit-text-stroke: 0;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+    /* Balance Sidebar (always visible while marketplace is open) */
+    #balanceSidebar {
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.95);
+      border: 2px solid #74b9ff;
+      border-radius: 8px 0 0 8px;
+      padding: 15px;
+      text-align: center;
+      z-index: 999;
+      width: 140px;
+      box-shadow: -2px 2px 8px rgba(0,0,0,0.3);
+      font-weight: bold;
+    }
+    #balanceSidebar img {
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+    /* Marketplace Overlay */
+    #marketplacePage {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      animation: fadeIn 0.5s ease-in-out forwards;
+    }
+    .marketplace-container {
+      background: linear-gradient(135deg, #74b9ff, #dfe6e9);
+      border: 3px solid #2c3e50;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 900px;
+      width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      text-align: center;
+      position: relative;
+    }
+    .marketplace-container h2 {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 36px;
+      color: #2c3e50;
+      margin: 0 0 10px 0;
+    }
+    .marketplace-container p {
+      margin: 10px 0;
+      color: #2c3e50;
+    }
+    /* Multi-select Actions (for bulk purchase) */
+    #multiSelectActions {
+      margin-top: 10px;
+      margin-bottom: 15px;
+    }
+    #multiSelectActions button {
+      margin: 0 8px;
+    }
+    /* Grid Layout for marketplace items */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .market-item {
+      background: #fff;
+      border: 2px solid #74b9ff;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+    .market-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .select-skin {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      transform: scale(1.2);
+    }
+    .market-item img {
+      width: 100%;
+      display: block;
+      border-bottom: 2px solid #74b9ff;
+    }
+    .market-item .info {
+      padding: 10px;
+      font-family: sans-serif;
+      color: #2c3e50;
+    }
+    .market-item .info .name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .market-item .info .price {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    /* Two separate buy buttons with larger coin icons and aligned */
+    .market-item .buy-with-coins,
+    .market-item .buy-with-noot {
+      padding: 6px 10px;
+      font-size: 13px;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      margin-right: 5px;
+      margin-bottom: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .market-item .buy-with-coins {
+      background-color: #2ecc71;
+    }
+    .market-item .buy-with-coins:hover {
+      background-color: #27ae60;
+    }
+    .market-item .buy-with-noot {
+      background-color: #ff6b6b;
+    }
+    .market-item .buy-with-noot:hover {
+      background-color: #fa5252;
+    }
+    .market-item .buy-with-coins img {
+      width: 22px;
+      height: 22px;
+      margin-left: 4px;
+    }
+    .market-item .buy-with-noot img {
+      width: 18px;
+      height: 18px;
+      margin-left: 4px;
+      filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));
+    }
+    /* -------------------------------------------------------
+       New CSS for Skins Overlay (similar to Marketplace)
+       ------------------------------------------------------- */
+    #skinsPage {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      animation: fadeIn 0.5s ease-in-out forwards;
+    }
+    .skins-container {
+      background: linear-gradient(135deg, #74b9ff, #dfe6e9);
+      border: 3px solid #2c3e50;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 900px;
+      width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      text-align: center;
+      position: relative;
+    }
+    .skins-container h2 {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 36px;
+      color: #2c3e50;
+      margin: 0 0 10px 0;
+    }
+    .skin-item {
+      background: #fff;
+      border: 2px solid #74b9ff;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+      position: relative;
+      padding: 10px;
+    }
+    .skin-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .skin-item img {
+      width: 100%;
+      display: block;
+      border-bottom: 2px solid #74b9ff;
+    }
+    .skin-item .skin-info {
+      padding: 10px;
+      font-family: sans-serif;
+      color: #2c3e50;
+    }
+    .skin-item .skin-info .name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .skin-item .wear-btn {
+      padding: 6px 10px;
+      font-size: 13px;
+      border: none;
+      border-radius: 4px;
+      background-color: #2ecc71;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 5px;
+      transition: background-color 0.2s;
+    }
+    .skin-item .wear-btn:hover {
+      background-color: #27ae60;
+    }
+    /* Updated Close Marketplace Button to fit in the Balance Sidebar */
+    #closeMarketplace {
+      background-color: #ff6b6b;
+      border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 4px;
+      padding: 6px 10px;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+      width: 100%;
+    }
+    #closeMarketplace:hover {
+      background-color: #fa5252;
+    }
+    /* Updated Close Skins Button to be narrower */
+    #closeSkins {
+      background-color: #ff6b6b;
+      border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 4px;
+      padding: 6px 10px;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+      /* Width changed to better match screenshot specification */
+      width: 120px;
+    }
+    #closeSkins:hover {
+      background-color: #fa5252;
+    }
+    /* make the Lucky Wheel close button look just like your other Close buttons */
+#closeLuckyWheel {
+  background-color: #ff6b6b;
+  border: 2px solid rgba(255,255,255,0.8);
+  border-radius: 4px;
+  padding: 8px 10px;       /* matches the others’ bumped padding */
+  min-height: 36px;        /* keep height consistent */
+  line-height: 1.2;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+  width: 120px;            /* same width as your #closeSkins button */
+}
+#closeLuckyWheel:hover {
+  background-color: #fa5252;
+}
+    .floating-logo {
+  /* soft white glow */
+  filter: drop-shadow(0 0 12px rgba(33, 104, 165, 0.8));
+  /* a tiny lift for the “floating” effect */
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100%   { transform: translateY(0); }
+  50%        { transform: translateY(-6px); }
+}
+/* add a 2px white “stroke” to all your #2980b9 buttons */
+/* add a 2px white “stroke” to all your #2980b9 buttons */
+#walletConnectOverlay button,
+#walletStatusBtn,
+#controls button,
+#modalWindow button,
+#openLuckyWheelBtn {
+  border: 2px solid rgba(255,255,255,0.8);
+}  /* ← here */
+
+#claimPrizeBtn {
+  background-color: #2ecc71;
+  border: 2px solid rgba(255,255,255,0.8);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+#claimPrizeBtn:hover {
+  background-color: #27ae60 !important;
+  border-color: #fff !important;
+}
+
+/* match style of the other primary buttons, but in gold */
+button#openLuckyWheelBtn {
+  background-color: #f1c40f;
+  border-radius: 4px;
+  padding: 10px 20px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin: 5px;
+}
+button#openLuckyWheelBtn:hover {
+  background-color: #d4ac0d;
+}
+/* if you want the hover state to keep the border */
+#walletStatusBtn:hover,
+#controls button:hover,
+#modalWindow button:hover,
+#walletConnectOverlay button:hover {
+  border-color: #fff;
+}
+/* make Close buttons a bit taller */
+#closeMarketplace,
+#closeSkins {
+  /* bump top/bottom padding from 6px → 8px */
+  padding: 8px 10px;       
+  /* optional: ensure even if font changes, height stays consistent */
+  min-height: 36px;        
+  line-height: 1.2;        
+}
+/* -------------------------------------------------------
+   Lucky‑Wheel Overlay (same style as Marketplace/Skins)
+   ------------------------------------------------------- */
+   #luckyWheelPage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+.luckyWheel-container {
+  background: linear-gradient(135deg, #74b9ff, #dfe6e9);
+  border: 3px solid #2c3e50;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
+  text-align: center;
+  position: relative;
+}
+.toon-noot-logo {
+  position: absolute;
+  bottom: 0px;    /* distance from bottom of container—tweak if you like */
+  right: 0px;     /* distance from right edge—tweak if you like */
+  width: 140px;     /* scale as needed */
+  height: auto;
+  pointer-events: none;  /* clicks pass through */
+}
+.luckyWheel-container h2 {
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 36px;
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+}
+/* container on left edge, centered horizontally */
+.side-links {
+  position: absolute;
+  top: 43%;                   /* move the whole row up/down */
+  left: 153px;                 /* move it left/right */
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;  /* even spacing across the width */
+  width: 240px;               /* total space for 3 links + gaps */
+  padding: 0;
+  margin: 0;
+  z-index: 5;
+}
+
+/* style each link as a block of equal size */
+.side-links a {
+  display: block;
+  width: 120px;                     /* adjust to taste */
+  height: 40px;                     /* adjust to taste */
+  line-height: 40px;                /* vertically center text */
+  text-align: center;
+  color: #2c3e5000;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+/* ─── toast popup ─── */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 200;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.toast.show {
+  display: inline-flex !important;
+  animation: fadeIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s;
+}
+@keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes fadeOut { from { opacity: 1 } to { opacity: 0 } }
+.touch-btn {
+  position: fixed;
+  bottom: 10%;
+  width: 20%;
+  max-width: 100px;
+  padding: 10px;
+  font-size: 1rem;
+  opacity: 0.7;
+  z-index: 100;
+}
+#jumpTouch { left: 10%; }
+#duckTouch { right: 10%; }
+@media (min-width:600px) {
+  .touch-btn { display: none; }  /* hide on larger screens */
+}
+/* 2.1 Hide inline instructions on small screens */
+@media (max-width: 600px) {
+  #instructions {
+    display: none;
+  }
+}
+
+/* 2.2 Style & show the Info button only on mobile */
+.touch-btn {
+  position: fixed;
+  bottom: 8%;
+  right: 10%;
+  width: 12%;
+  max-width: 60px;
+  padding: 8px;
+  font-size: 1.2rem;
+  z-index: 200;
+  opacity: 0.8;
+}
+@media (min-width: 601px) {
+  #showInstructionsBtn {
+    display: none;
+  }
+}
+
+/* 2.3 Overlay + modal for instructions */
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 300;
+}
+.instructionsModal {
+  background: #fff;
+  padding: 20px;
+  max-width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  border-radius: 8px;
+  position: relative;
+}
+.close-btn {
+  position: absolute;
+  top: 8px; right: 8px;
+  font-size: 1.2rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* 2.4 Canvas fills the mobile viewport */
+@media (max-width: 600px) {
+  #game-container {
+    width: 100vw;
+    height: calc(100vh - 60px); /* leave room for controls at bottom */
+    margin: 0;
+    border: none;
+    outline: none;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="side-links">
+    <a href="https://x.com/AbstractChain" target="_blank">Link One</a>
+    <a href="https://x.com/nootonabstract" target="_blank">Link Two</a>
+    <a href="https://x.com/Recoverrr" target="_blank">Link Three</a>
+  </div>  
+  <audio id="bgAudio" src="assets/music/gameAudio.mp3" loop preload="auto" muted></audio>
+<audio id="coinAudio" src="assets/music/coinAudio.mp3"></audio>
+<audio id="gameoverAudio" src="assets/music/gameoverAudio.mp3"></audio>
+<audio id="giftAudio" src="assets/music/giftAudio.mp3"></audio>
+  <header>
+    <h1><br>    </h1>
+    <h2><br></h2>
+  </header>
+
+  <!-- Updated Wallet Status Button with Wallet Logo and drop-shadow -->
+  <button id="walletStatusBtn">
+    <img src="assets/walletLogo.png" alt="Wallet Logo" style="width:18px; height:18px; vertical-align:middle; margin-right:4px; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));">
+    Connect Wallet
+  </button>
+
+  <div id="game-container">
+    <img id="audioToggle" src="assets/audioLoudW.png" alt="Toggle Audio">
+    <!-- Wallet Connect Overlay with Wallet Logo and drop-shadow -->
+    <div id="walletConnectOverlay">
+      <!-- ADDED LINE BELOW -->
+      <img src="assets/desktopLogo.png" alt="Desktop Logo" class="floating-logo" style="width:150px; height: 150px; margin-bottom:15px;" />
+
+      <h2>Connect Your Wallet</h2>
+      <p>Your wallet connection is read‑only. No transactions will be initiated.</p>
+      <button id="connectWalletBtn">
+        <img src="assets/walletLogo.png" alt="Wallet Logo" style="width:18px; height:18px; vertical-align:middle; margin-right:4px; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));">
+        Connect Wallet
+      </button>
+    </div>
+
+    <!-- Persistent coin display (in-game coins) -->
+    <div id="persistentCoins">
+      <img src="assets/coin.png" alt="Coin" />
+      <span>Total Coins: <span id="totalCoinsDisplay">0</span></span>
+    </div>
+
+    <!-- Start overlay before game begins -->
+    <div id="startOverlay">
+      <h2>Press ENTER to Start</h2>
+    </div>
+
+    <!-- Game canvas -->
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+    <!-- Modal overlay for final scores/leaderboard -->
+    <div id="modalOverlay">
+      <div id="modalWindow">
+        <div id="modalContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls below the game -->
+  <div id="controls">
+    <button class="touch-btn" id="jumpTouch">Jump</button>
+<button class="touch-btn" id="duckTouch">Duck</button>
+<!-- only for mobile, toggles the instructions -->
+<button id="showInstructionsBtn" class="touch-btn">ℹ️</button>
+
+<!-- full-screen overlay for instructions -->
+<div id="instructionsOverlay" class="overlay">
+  <div class="instructionsModal">
+    <button id="closeInstructionsBtn" class="close-btn">✕</button>
+    <!-- reuse your existing instructions markup -->
+    <div id="instructions">
+      <!-- …your <ul> of how-to-play here… -->
+    </div>
+  </div>
+</div>
+
+    <button id="restart-btn" style="display: none;">
+      <img src="assets/restartLogo.png" alt="Restart Logo" style="width:18px; height:18px; vertical-align:middle; margin-right:4px; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));">
+      Restart Game
+    </button>
+    <button id="view-leaderboard-btn" style="display: none;">
+      <img src="assets/leaderboardLogo.png" alt="Leaderboard Logo" style="width:18px; height:18px; vertical-align:middle; margin-right:4px; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));">
+      View Leaderboard
+    </button>
+    <!-- Updated Marketplace Button with Marketplace Logo and drop-shadow -->
+    <button id="openMarketplaceBtn">
+      <img src="assets/marketplaceLogo.png" alt="Marketplace Logo" style="width:18px; height:18px; vertical-align:middle; margin-right:4px; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));">
+      Marketplace
+    </button>
+    <!-- NEW SKINS BUTTON ADDED NEXT TO MARKETPLACE -->
+    <button id="openSkinsBtn">
+      <img src="assets/skinsLogo.png" alt="Skins Logo" style="width:18px; height:18px; vertical-align:middle; margin-right:4px; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));">
+      Skins
+    </button>
+        <!-- NEW “Lucky Wheel” BUTTON -->
+        <button id="openLuckyWheelBtn">
+          <img src="assets/wheelLogo1.png" alt="Wheel Logo"
+               style="width:18px; height:18px; vertical-align:middle; margin-right:10px; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));transform: scale(1.5);
+  transform-origin: left center;">
+          Gift Carousel
+        </button>    
+  </div>
+
+  <!-- Balance Sidebar (always visible while marketplace is open) -->
+  <div id="balanceSidebar" style="display: none;">
+    <div id="balanceCoins">
+      <img src="assets/coin.png" alt="Coin" />
+      <span id="sidebarCoinBalance">0</span>
+    </div>
+    <hr />
+    <div id="balanceNoot">
+      $NOOT:
+      <span id="sidebarNootBalance">0</span>
+    </div>
+    <button id="closeMarketplace">Close Marketplace</button>
+  </div>
+
+  <!-- Marketplace Overlay -->
+  <div id="marketplacePage">
+    <div class="marketplace-container">
+      <h2>Marketplace</h2>
+      <p>Select skins individually or check multiple to buy them all at once!</p>
+      <!-- Multi-select actions -->
+      <div id="multiSelectActions">
+        <button id="buySelectedWithCoinsBtn">
+          Buy Selected w/ 
+          <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; vertical-align:middle; margin-left:4px;"/>
+        </button>
+        <button id="buySelectedWithNOOTBtn">
+          Buy Selected w/ 
+          <img src="assets/nootLogo.png" alt="NOOT" style="width:20px; vertical-align:middle; margin-left:4px;"/>
+        </button>
+      </div>
+      <div class="grid">
+        <!-- Marketplace Items -->
+        <!-- Market Item 1 -->
+        <div class="market-item" data-skin-id="skin1" data-coin-price="50" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin1.png" alt="Skin 1" />
+          <div class="info">
+            <p class="name">Duck</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">50 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 2 -->
+        <div class="market-item" data-skin-id="skin2" data-coin-price="100" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin2.png" alt="Skin 2" />
+          <div class="info">
+            <p class="name">Frog</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">100 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 3 -->
+        <div class="market-item" data-skin-id="skin3" data-coin-price="150" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin3.png" alt="Skin 3" />
+          <div class="info">
+            <p class="name">Cat</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">150 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 4 -->
+        <div class="market-item" data-skin-id="skin4" data-coin-price="150" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin4.png" alt="Skin 4" />
+          <div class="info">
+            <p class="name">Bunny</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">150 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 5 -->
+        <div class="market-item" data-skin-id="skin5" data-coin-price="150" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin5.png" alt="Skin 5" />
+          <div class="info">
+            <p class="name">Bear</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">150 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 6 -->
+        <div class="market-item" data-skin-id="skin6" data-coin-price="200" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin6.png" alt="Skin 6" />
+          <div class="info">
+            <p class="name">Bull</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">200 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 7 -->
+        <div class="market-item" data-skin-id="skin7" data-coin-price="200" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin7.png" alt="Skin 7" />
+          <div class="info">
+            <p class="name">Tiger</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">200 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 8 -->
+        <div class="market-item" data-skin-id="skin8" data-coin-price="200" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin8.png" alt="Skin 8" />
+          <div class="info">
+            <p class="name">Shark</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">200 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 9 -->
+        <div class="market-item" data-skin-id="skin9" data-coin-price="225" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin9.png" alt="Skin 9" />
+          <div class="info">
+            <p class="name">Vacation</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">225 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 10 -->
+        <div class="market-item" data-skin-id="skin10" data-coin-price="225" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin10.png" alt="Skin 10" />
+          <div class="info">
+            <p class="name">Clown</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">225 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 11 -->
+        <div class="market-item" data-skin-id="skin11" data-coin-price="250" data-noot-price="70">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin11.png" alt="Skin 11" />
+          <div class="info">
+            <p class="name">Dino</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">250 || 70 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 12 -->
+        <div class="market-item" data-skin-id="skin12" data-coin-price="250" data-noot-price="137">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin12.png" alt="Skin 12" />
+          <div class="info">
+            <p class="name">Keeper</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">250 || 137 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 13 -->
+        <div class="market-item" data-skin-id="skin13" data-coin-price="250" data-noot-price="137">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin13.png" alt="Skin 13" />
+          <div class="info">
+            <p class="name">McDonalds</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">275 || 137 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 14 -->
+        <div class="market-item" data-skin-id="skin14" data-coin-price="275" data-noot-price="137">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin14.png" alt="Skin 14" />
+          <div class="info">
+            <p class="name">FBI</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">275 || 137 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 15 -->
+        <div class="market-item" data-skin-id="skin15" data-coin-price="300" data-noot-price="137">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin15.png" alt="Skin 15" />
+          <div class="info">
+            <p class="name">President</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">300 || 137 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 16 -->
+        <div class="market-item" data-skin-id="skin16" data-coin-price="300" data-noot-price="137">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin16.png" alt="Skin 16" />
+          <div class="info">
+            <p class="name">Knight</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">300 || 137 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 17 -->
+        <div class="market-item" data-skin-id="skin17" data-coin-price="325" data-noot-price="137">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin17.png" alt="Skin 17" />
+          <div class="info">
+            <p class="name">Hero</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">325 || 137 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 18 -->
+        <div class="market-item" data-skin-id="skin18" data-coin-price="325" data-noot-price="137">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin18.png" alt="Skin 18" />
+          <div class="info">
+            <p class="name">Robot</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">325 || 137 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 19 -->
+        <div class="market-item" data-skin-id="skin19" data-coin-price="350" data-noot-price="206">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin19.png" alt="Skin 19" />
+          <div class="info">
+            <p class="name">Alien</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">350 || 206 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 20 -->
+        <div class="market-item" data-skin-id="skin20" data-coin-price="375" data-noot-price="206">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin20.png" alt="Skin 20" />
+          <div class="info">
+            <p class="name">Dragon</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">375 || 206 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 21 -->
+        <div class="market-item" data-skin-id="skin21" data-coin-price="400" data-noot-price="206">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin21.png" alt="Skin 21" />
+          <div class="info">
+            <p class="name">King</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">400 || 206 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 22 -->
+        <div class="market-item" data-skin-id="skin22" data-coin-price="500" data-noot-price="206">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin22.png" alt="Skin 22" />
+          <div class="info">
+            <p class="name">Diamond</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">500 || 206 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+        <!-- Market Item 23 -->
+        <div class="market-item" data-skin-id="skin23" data-coin-price="800" data-noot-price="206">
+          <input type="checkbox" class="select-skin" />
+          <img src="assets/skins/skin23.png" alt="Skin 23" />
+          <div class="info">
+            <p class="name">Abstract</p>
+            <p class="price">
+              Price:<br />
+              <img src="assets/coin.png" alt="Coin" style="width:25px; height:25px; display:inline-block; position:relative; top:6px; margin:0 3px 0 0px;"/> 
+              <strong style="font-size: 15px;">800 || 206 $NOOT</strong>
+            </p>
+            <button class="buy-with-coins">
+              Buy w/ <img src="assets/coin.png" alt="Coin"/>
+            </button>
+            <button class="buy-with-noot">
+              Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- The close button is now part of the balanceSidebar -->
+    </div>
+  </div>
+
+  <!-- SKINS Overlay (New) -->
+  <div id="skinsPage">
+    <div class="skins-container">
+      <h2>Your Unlocked Skins</h2>
+      <div class="grid" id="skinsGrid">
+        <!-- Skins items will be populated via JavaScript -->
+      </div>
+      <button id="closeSkins">Close Skins</button>
+    </div>
+  </div>
+<!-- Lucky Wheel Overlay -->
+<div id="luckyWheelPage">
+  <div class="luckyWheel-container">
+    <h2>Gift Carousel</h2>
+    <p>Here you can spin for a chance to win free coins, $NOOT skins, or nothing at all!</p>
+    <div class="carousel-wrapper">
+      <div id="carouselPointer"></div>
+      <div id="giftCarouselContainer"></div>
+      <div id="giftCarousel">
+        <!-- Duplicate enough gifts to scroll smoothly -->
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <img src="assets/giftLogo.png" class="gift-item" />
+        <!-- repeat as needed -->
+      </div>
+    </div>
+      <!-- Prize display & claim button (hidden until you win) -->
+  <div id="prizeInfo" style="display:none; text-align:center; margin: 10px 0;">
+    <p id="prizeLabel" style="font-size:16px; font-weight:bold; color:#fff; text-shadow:1px 1px 2px rgba(0,0,0,0.7);">
+      Prize Won:
+    </p>
+    <button id="claimPrizeBtn" style="
+        background-color: #2ecc71;
+        border: 2px solid rgba(255,255,255,0.8);
+        border-radius: 4px;
+        padding: 8px 16px;
+        font-size: 14px;
+        color: #fff;
+        cursor: pointer;
+        transition: background-color 0.3s, border-color 0.3s;
+        margin-top: 5px;
+      ">
+      Claim Prize
+    </button>
+  </div>
+    <!-- your wheel markup goes here, e.g. a <canvas> or image -->
+      <button id="spinWheelBtn">Spin Carousel</button>
+    <button id="closeLuckyWheel">Exit Carousel</button>
+        <!-- cooldown / free-spin display -->
+        <div
+        id="spinCooldownTimer"
+        style="
+          position: absolute;
+          bottom: 10px;
+          left: 10px;
+          color: #fff;
+          font-weight: bold;
+          font-family: sans-serif;
+          text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        ">
+        Next spin in: 06:00:00
+      </div>  
+        <!-- Toon NOOT badge in bottom‑right -->
+        <img
+        src="assets/toonNOOT.png"
+        alt="Toon NOOT"
+        class="toon-noot-logo"
+      /> 
+  </div>
+</div>
+  <!-- Toast notification for prize claims -->
+  <div id="claimToast" class="toast"></div>
+
+  <!-- Instructions -->
+  <div id="instructions">
+    <h2>How to Play</h2>
+    <ul>
+      <li><strong>Press E̲N̲T̲E̲R̲ to start or restart the game.</strong></li>
+      <li><strong>Press S̲P̲A̲C̲E̲  to jump.</strong></li>
+      <li><strong>Press S̲H̲I̲F̲T̲ to duck.</strong></li>
+      <li><strong>The game will speed up E̲X̲P̲O̲N̲E̲N̲T̲I̲A̲L̲L̲Y̲ as you survive.</strong></li>
+      <li><strong>J̲U̲M̲P̲ or D̲U̲C̲K̲ the in game obstacles.</strong></li>
+      <li><strong>Your final score = coins collected + time survived.</strong></li>
+    </ul>
+  </div>
+
+  <script>
+    /***************************************************************************
+     * Below is the full JavaScript code with all your original game logic,
+     * wallet connection, multi-select purchase, dual buy buttons, and fixed
+     * balance sidebar functionality.
+     ***************************************************************************/
+     const bgAudio = document.getElementById('bgAudio');
+const coinAudio = document.getElementById('coinAudio');
+const gameoverAudio = document.getElementById('gameoverAudio'); gameoverAudio.volume = 0.1;
+const giftAudio = document.getElementById('giftAudio'); giftAudio.volume = 0.1;
+// 2️⃣ constants for on‑chain burn
+const NOOT_CONTRACT_ADDRESS = "0x3d8b869eB751B63b7077A0A93D6b87a54e6C8f56"; 
+const BURN_ADDRESS         = "0x000000000000000000000000000000000000dEaD"; 
+const ERC20_ABI = [ "function transfer(address to, uint256 amount) returns (bool)"]; 
+// ─── Toast setup: grab the element and define your helper ───
+const claimToast = document.getElementById('claimToast');
+function showToast(html, duration = 3000) {
+  // inject the content
+  claimToast.innerHTML = html;
+  // show it
+  claimToast.classList.add('show');
+  // hide after duration
+  setTimeout(() => {
+    claimToast.classList.remove('show');
+  }, duration);
+}
+
+// will hold our ethers.js Contract once the user connects
+let nootContract = null;
+
+window.addEventListener('load', () => {
+  bgAudio.volume = 0.5;      // adjust as you like
+    // some browsers block autoplay until first user interaction
+  });
+    // ------------------------- Game & Global Variables -------------------------
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    let gameState = "waiting";
+    let score = 0;
+    let startTime = 0;
+    let elapsedTime = 0;
+    const baseSpeed = 4;
+    let gameSpeed = baseSpeed;
+    let collisionTimer = 0;
+    const player = {
+      x: 100,
+      y: 0,
+      normalHeight: 60,
+      duckHeight: 40,
+      width: 60,
+      height: 60,
+      vy: 0,
+      onGround: false,
+      ducking: false
+    };
+    const gravity = 0.6;
+    const jumpForce = 14;
+    const groundHeight = 80;
+    let obstacles = [];
+    let coins = [];
+    let clouds = [];
+    let snowflakes = [];
+    let obstacleTimer = 0;
+    let coinTimer = 0;
+    let userCoins = 0;
+function getCoinKey() {
+  return `totalCoinsCollected_${walletAddress}`;
+}
+    let userTokens = 0; // Updated from wallet later
+    
+
+    // ------------------------- Assets & DOM Elements -------------------------
+    const penguinImg = new Image(); 
+    penguinImg.src = 'assets/penguin.png';
+    const coinImg = new Image(); coinImg.src = 'assets/coin.png';
+    const snowPileImg = new Image(); snowPileImg.src = 'assets/snowPile.png';
+    const icicleObsImg = new Image(); icicleObsImg.src = 'assets/icicleObs.png';
+
+    const startOverlay = document.getElementById('startOverlay');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalContent = document.getElementById('modalContent');
+    const restartBtn = document.getElementById('restart-btn');
+    const viewLeaderboardBtn = document.getElementById('view-leaderboard-btn');
+    const persistentCoinsDisplay = document.getElementById('totalCoinsDisplay');
+
+    const walletConnectOverlay = document.getElementById('walletConnectOverlay');
+    const connectWalletBtn = document.getElementById('connectWalletBtn');
+    const walletStatusBtn = document.getElementById('walletStatusBtn');
+    const openMarketplaceBtn = document.getElementById('openMarketplaceBtn');
+    const marketplacePage = document.getElementById('marketplacePage');
+    const closeMarketplaceBtn = document.getElementById('closeMarketplace');
+
+    // New DOM elements for skins functionality
+    const openSkinsBtn = document.getElementById('openSkinsBtn');
+    const skinsPage = document.getElementById('skinsPage');
+    const closeSkinsBtn = document.getElementById('closeSkins');
+    const skinsGrid = document.getElementById('skinsGrid');
+
+    const balanceSidebar = document.getElementById('balanceSidebar');
+    const sidebarCoinBalance = document.getElementById('sidebarCoinBalance');
+    const sidebarNootBalance = document.getElementById('sidebarNootBalance');
+
+    // get the new elements
+const openLuckyWheelBtn = document.getElementById('openLuckyWheelBtn');
+const luckyWheelPage    = document.getElementById('luckyWheelPage');
+const closeLuckyWheel   = document.getElementById('closeLuckyWheel');
+const spinWheelBtn = document.getElementById('spinWheelBtn');
+spinWheelBtn.addEventListener('click', () => {
+  const now     = Date.now();
+  const elapsed = now - lastSpin;
+  if (elapsed < SPIN_COOLDOWN_MS) {
+    // too soon!
+    showToast(`Please wait ${fmt(SPIN_COOLDOWN_MS - elapsed)} before spinning again.`);
+    return;
+  }
+
+  // record this spin
+  lastSpin = now;
+  localStorage.setItem(spinKey(), String(lastSpin));
+  updateSpinState();    // disable button immediately
+  spinWheelBtn.disabled = true;
+
+  // start the gift‐spin sound
+  giftAudio.currentTime = 0;
+  giftAudio.play().catch(()=>{});  
+
+  const giftContainer = document.getElementById('giftCarousel');
+  const containerW    = document.getElementById('giftCarouselContainer').offsetWidth;
+  const totalW        = giftContainer.scrollWidth;
+  const duration      = 5800; // 6.5 seconds total
+
+  // reset position
+  giftContainer.style.transition = 'none';
+  giftContainer.style.transform  = 'translateX(0)';
+  void giftContainer.offsetWidth;  // force reflow
+
+  // spin: fast → slower and slower (deep ease-out)
+  giftContainer.style.transition = `transform ${duration}ms cubic-bezier(0, 0, 0.58, 1)`;
+  giftContainer.style.transform  = `translateX(-${totalW - containerW}px)`;
+
+  setTimeout(() => {
+  // hide any old prize info
+  document.getElementById('prizeInfo').style.display = 'none';
+
+  // STEP 1: pick a category
+  const pNone   = 0.30;  // 30% no prize
+  const pCoin   = 0.50;  // 50% coins
+  const pToken  = 0.15;  // 15% NOOT
+  const pSkin   = 0.05;  //  5% skin
+
+  const r = Math.random();
+  let msg;
+
+  // helper: weighted random pick
+  function weightedRandom(options) {
+    const totalW = options.reduce((sum,o) => sum + o.weight, 0);
+    let x = Math.random() * totalW;
+    for (let o of options) {
+      if (x < o.weight) return o;
+      x -= o.weight;
+    }
+  }
+
+  if (r < pNone) {
+    // no prize
+    msg = 'Sorry, no gift this time.';
+  }
+  else if (r < pNone + pCoin) {
+    // COIN TIERS
+    const coinTiers = [
+      { amount:  50, weight: 50 },  // common
+      { amount: 100, weight: 30 },
+      { amount: 200, weight: 15 },
+      { amount: 300, weight:  5 }   // very rare
+    ];
+    const pick = weightedRandom(coinTiers);
+    userCoins += pick.amount;
+    updateUserCurrency();
+    // 1️⃣ Persist the new balance right away
+localStorage.setItem( getCoinKey(), userCoins.toString() );
+
+// 2️⃣ Also update the canvas HUD’s span
+document.getElementById('totalCoinsDisplay').textContent = userCoins;
+
+msg = `
+  🎉 You won ${pick.amount} Coins!
+  <img src="assets/coin.png" alt="Coin" class="prize-icon">
+`;
+    playConfettiAnimation();
+  }
+  else if (r < pNone + pCoin + pToken) {
+    // NOOT TIERS
+    const tokenTiers = [
+      { amount:  25, weight: 50 },
+      { amount:  50, weight: 30 },
+      { amount:  75, weight: 15 },
+      { amount: 100, weight:  5 }
+    ];
+    const pick = weightedRandom(tokenTiers);
+    userTokens += pick.amount;
+    updateUserCurrency();
+    msg = `
+  🎉 You won ${pick.amount} NOOT!
+  <img src="assets/nootLogo.png" alt="$NOOT" class="prize-icon">
+`;
+    playConfettiAnimation();
+  }
+  else {
+  // SKIN (uniform among skin1…skin23)
+  const allSkins = Array.from({ length: 23 }, (_, i) => `skin${i+1}`);
+  const skinId   = allSkins[Math.floor(Math.random() * allSkins.length)];
+  saveUserSkin(skinId);
+  updateMarketplaceUI();
+
+  // build the thumbnail + message
+  const imgSrc    = `assets/skins/${skinId}.png`;
+  const thumbHtml = `
+    <img src="${imgSrc}" 
+         alt="${skinId}" 
+         class="prize-thumb"><br>
+    🎉 Free Skin Unlocked!
+  `;
+  msg = thumbHtml;            // ← set msg, not lastPrizeWon
+  playConfettiAnimation();
+}
+
+  // display prize & enable Claim button
+  lastPrizeWon = msg;
+  const prizeInfo = document.getElementById('prizeInfo');
+  document.getElementById('prizeLabel')
+        .innerHTML = lastPrizeWon;
+  prizeInfo.style.display = 'block';
+
+  const claimBtn = document.getElementById('claimPrizeBtn');
+  claimBtn.onclick = () => {
+  // inject your HTML (with icons) into the toast
+  claimToast.innerHTML = lastPrizeWon;
+  // show the toast
+  claimToast.classList.add('show');
+  // hide the toast after 3s
+  setTimeout(() => {
+    claimToast.classList.remove('show');
+  }, 3000);
+  // hide the prize Info panel
+  prizeInfo.style.display = 'none';
+};
+  
+  spinWheelBtn.disabled = false;
+}, duration);
+});
+openLuckyWheelBtn.addEventListener('click', () => {
+  if (!walletConnected) {
+    showToast("Please connect your wallet first to access the Gift Carousel.");
+    return;
+  }
+  luckyWheelPage.style.display = 'flex';
+});
+
+closeLuckyWheel.addEventListener('click', () => {
+  luckyWheelPage.style.display = 'none';
+});
+
+// (optional) clicking outside container closes it
+luckyWheelPage.addEventListener('click', e => {
+  if (!e.target.closest('.luckyWheel-container')) {
+    luckyWheelPage.style.display = 'none';
+  }
+});
+
+
+    let walletConnected = false;
+    let walletAddress = "";
+    const SPIN_COOLDOWN_MS = 6 * 60 * 60 * 1000;  // 6 hours
+
+function spinKey() { return `lastSpin_${walletAddress}`; }
+let lastSpin = 0;
+
+// utility to zero-pad & format ms→HH:MM:SS
+function pad(n){ return n.toString().padStart(2,'0'); }
+function fmt(ms){
+  const total = Math.max(0, Math.floor(ms/1000));
+  const h = Math.floor(total/3600),
+        m = Math.floor((total%3600)/60),
+        s = total%60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+  const cooldownTimerEl = document.getElementById('spinCooldownTimer');
+
+  function updateSpinState() {
+  // pull the *current* saved value for this wallet
+  lastSpin = parseInt(localStorage.getItem(spinKey()) || "0", 10);
+
+  const now     = Date.now();
+  const elapsed = now - lastSpin;
+  const ready   = elapsed >= SPIN_COOLDOWN_MS;
+
+  spinWheelBtn.disabled = !ready;
+
+  if (!ready) {
+    const left = SPIN_COOLDOWN_MS - elapsed;
+    cooldownTimerEl.textContent = `Next spin: ${fmt(left)}`;
+  } else {
+    cooldownTimerEl.textContent = `Spin available!`;
+  }
+}
+
+// call twice: once to initialize, then every second
+updateSpinState();
+setInterval(updateSpinState, 1000);
+
+
+    // Variable holding the current equipped skin. Default is "default" for penguin.
+    let currentSkin = "default";
+    // —————————————————————————————————————————————
+// Persist/load the last‑worn skin per wallet
+// —————————————————————————————————————————————
+
+function saveLastSkin(skinId) {
+  if (!walletAddress) return;
+  localStorage.setItem(`lastSkin_${walletAddress}`, skinId);
+}
+
+function loadLastSkin() {
+  if (!walletAddress)   return "default";
+  return localStorage.getItem(`lastSkin_${walletAddress}`) || "default";
+}
+
+// Load it (falling back to “default”)
+function loadLastSkin() {
+  if (!walletAddress) return "default";
+  return localStorage.getItem(`lastSkin_${walletAddress}`) || "default";
+}
+
+    // ------------------------- Wallet & Token Functions -------------------------
+    function getTokenBalance(wallet, contractAddr) {
+      const methodId = "0x70a08231"; // balanceOf(address)
+      let paddedAddress = wallet.toLowerCase().replace("0x", "").padStart(64, "0");
+      let data = methodId + paddedAddress;
+      return window.ethereum.request({
+        method: "eth_call",
+        params: [{ to: contractAddr, data: data }, "latest"]
+      }).then(result => parseInt(result, 16));
+    }
+    function updateUserCurrency() {
+      sidebarCoinBalance.innerText = userCoins;
+      sidebarNootBalance.innerText = userTokens;
+    }
+    function updateWalletStatusBtn() {
+      walletStatusBtn.innerText = walletConnected ? "DISCONNECT" : "CONNECT";
+    }
+    const requiredChainId = "0x2b74";
+    connectWalletBtn.addEventListener('click', async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        if (window.ethereum.chainId !== requiredChainId) {
+          showToast("Please switch your wallet network to the Abstract Testnet. This connection is read-only.");
+          return;
+        }
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          walletAddress = accounts[0];
+          walletConnected = true;
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+const signer   = provider.getSigner();
+nootContract   = new ethers.Contract(
+  NOOT_CONTRACT_ADDRESS,
+  ERC20_ABI,
+  signer
+);
+          currentSkin = loadLastSkin();
+  const skinObj = allSkins.find(s => s.id === currentSkin) || allSkins[0];
+  penguinImg.src = skinObj.img;
+          const key = getCoinKey();
+          if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, "0");
+          }
+          userCoins = parseInt(localStorage.getItem(key), 10);
+          updateUserCurrency();
+          persistentCoinsDisplay.innerText = userCoins;
+          updateWalletStatusBtn();
+          walletConnectOverlay.style.animation = 'fadeOutWallet 0.5s forwards';
+          setTimeout(() => { walletConnectOverlay.style.display = 'none'; }, 500);
+          getTokenBalance(walletAddress, NOOT_CONTRACT_ADDRESS)
+  .then(balanceWei => {
+    // 1) convert wei (an integer) to NOOT:
+    const raw = balanceWei / 1e18;
+    // 2) round to 4 decimals (or however many you like):
+    userTokens = parseFloat(raw.toFixed(4));
+    updateUserCurrency();
+  })
+  .catch(err => {
+    console.error("Error fetching NOOT CA balance", err);
+  });
+        } catch (error) {
+          console.error('Connect error:', error);
+          showToast(`Connection error: ${error.message || error}`);
+        }
+      } else {
+        showToast("MetaMask not detected. Please install it to play the game.");
+      }
+    });
+    walletStatusBtn.addEventListener('click', () => {
+      if (walletConnected) {
+        walletConnected = false;
+        walletAddress = "";
+        userTokens = 0;
+        updateUserCurrency();
+        updateWalletStatusBtn();
+        walletConnectOverlay.style.display = 'flex';
+        walletConnectOverlay.style.animation = 'fadeInWallet 0.5s forwards';
+      } else {
+        connectWalletBtn.click();
+      }
+    });
+
+    // ------------------------- Marketplace Functions -------------------------
+    function loadUserSkins() {
+      const skinsKey = `unlockedSkins_${walletAddress}`;
+      const unlockedSkins = localStorage.getItem(skinsKey);
+      return unlockedSkins ? JSON.parse(unlockedSkins) : [];
+    }
+    function saveUserSkin(skinId) {
+      const skinsKey = `unlockedSkins_${walletAddress}`;
+      let unlockedSkins = loadUserSkins();
+      if (!unlockedSkins.includes(skinId)) {
+        unlockedSkins.push(skinId);
+        localStorage.setItem(skinsKey, JSON.stringify(unlockedSkins));
+      }
+    }
+    function updateMarketplaceUI() {
+      const unlockedSkins = loadUserSkins();
+      document.querySelectorAll('.market-item').forEach(item => {
+        const skinId = item.getAttribute('data-skin-id');
+        const btnCoins = item.querySelector('.buy-with-coins');
+        const btnNoot = item.querySelector('.buy-with-noot');
+        if (unlockedSkins.includes(skinId)) {
+          if (btnCoins) {
+            btnCoins.disabled = true;
+            btnCoins.innerText = "Unlocked";
+          }
+          if (btnNoot) {
+            btnNoot.disabled = true;
+            btnNoot.innerText = "Unlocked";
+          }
+        } else {
+          if (btnCoins) {
+            btnCoins.disabled = false;
+            btnCoins.innerHTML = `Buy w/ <img src="assets/coin.png" alt="Coin"/>`;
+          }
+          if (btnNoot) {
+            btnNoot.disabled = false;
+            btnNoot.innerHTML = `Buy w/ <img src="assets/nootLogo.png" alt="NOOT" style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));"/>`;
+          }
+        }
+        // Update the skin image based on unlocked status.
+        const img = item.querySelector('img:not(.select-skin)');
+        if (img) {
+          if (unlockedSkins.includes(skinId)) {
+            img.src = `assets/skins/${skinId}.png`;
+          } else {
+            img.src = `assets/skins/${skinId}Locked.png`;
+          }
+        }
+      });
+    }
+    async function purchaseOneSkin(skinId, coinPrice, nootPrice, currency) {
+      console.log(`BUY ${skinId}: userCoins=${userCoins}, coinPrice=${coinPrice}`);
+      // Check if skin is already unlocked
+      let alreadyUnlocked = loadUserSkins().includes(skinId);
+      if (currency === "coins") {
+        if (userCoins >= coinPrice) {
+          userCoins -= coinPrice;
+          // Persist coin balance so it stays updated on refresh
+          localStorage.setItem(getCoinKey(), userCoins.toString());
+          updateUserCurrency();
+          if (!alreadyUnlocked) {
+            // Add shake animation to the market item, then play confetti when done.
+            let marketItem = document.querySelector(`.market-item[data-skin-id="${skinId}"]`);
+            if (marketItem) {
+              marketItem.classList.add("shake");
+              marketItem.addEventListener("animationend", () => {
+                marketItem.classList.remove("shake");
+                saveUserSkin(skinId);
+                playConfettiAnimation();
+                updateMarketplaceUI();
+              }, { once: true });
+            } else {
+              saveUserSkin(skinId);
+              playConfettiAnimation();
+              updateMarketplaceUI();
+            }
+          } else {
+            updateMarketplaceUI();
+          }
+        } else {
+          showToast("Not enough coins to buy this skin.");
+        }
+      } else if (currency === "noot") {
+        // make sure we have a contract instance
+        if (!nootContract) {
+          return showToast("Please reconnect your wallet first.");
+        }
+
+        // 1️⃣ convert human price (e.g. 70) into wei
+        const amount = ethers.utils.parseUnits(nootPrice.toString(), 18);
+
+        try {
+          // 2️⃣ send the transfer(to burn address)
+          const tx = await nootContract.transfer(BURN_ADDRESS, amount);
+          
+          // 3️⃣ wait for on‑chain confirmation
+          await tx.wait();
+
+          // 4️⃣ update UI & unlock skin
+          userTokens -= nootPrice;
+          updateUserCurrency();
+          saveUserSkin(skinId);
+          playConfettiAnimation();
+          updateMarketplaceUI();
+
+        } catch (err) {
+          console.error("Burn tx failed:", err);
+          showToast("Transaction failed or was rejected.");
+        }
+
+        return;
+      }
+    }
+    function initializeMarketplaceItems() {
+      document.querySelectorAll('.market-item').forEach(item => {
+        const skinId = item.getAttribute('data-skin-id');
+        const coinPrice = parseInt(item.getAttribute('data-coin-price') || "100");
+        const nootPrice = parseInt(item.getAttribute('data-noot-price') || "1");
+        const btnCoins = item.querySelector('.buy-with-coins');
+        const btnNoot = item.querySelector('.buy-with-noot');
+        if (btnCoins) {
+          btnCoins.addEventListener('click', e => {
+            e.stopPropagation();
+            purchaseOneSkin(skinId, coinPrice, nootPrice, "coins");
+          });
+        }
+        if (btnNoot) {
+          btnNoot.addEventListener('click', e => {
+            e.stopPropagation();
+            purchaseOneSkin(skinId, coinPrice, nootPrice, "noot");
+          });
+        }
+      });
+    }
+    function setupSelectionGlow() {
+  document.querySelectorAll('.select-skin').forEach(box => {
+    box.addEventListener('change', () => {
+      const item = box.closest('.market-item');
+      if (box.checked) {
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+      }
+    });
+  });
+}
+
+// call it once at startup
+initializeMarketplaceItems();
+setupSelectionGlow();
+
+    const buySelectedWithCoinsBtn = document.getElementById('buySelectedWithCoinsBtn');
+    const buySelectedWithNOOTBtn = document.getElementById('buySelectedWithNOOTBtn');
+    function getSelectedSkins() {
+      const checkedBoxes = document.querySelectorAll('.select-skin:checked');
+      const ids = [];
+      checkedBoxes.forEach(box => {
+        const parent = box.closest('.market-item');
+        if (parent) {
+          ids.push(parent.getAttribute('data-skin-id'));
+        }
+      });
+      return ids;
+    }
+    function clearSelectedSkins() {
+  document.querySelectorAll('.select-skin:checked').forEach(box => {
+    box.checked = false;
+    box.closest('.market-item').classList.remove('selected');
+  });
+}
+    buySelectedWithCoinsBtn.addEventListener('click', () => {
+      const selectedSkinIds = getSelectedSkins();
+      playConfettiAnimation();
+      if (!selectedSkinIds.length) {
+        showToast("No skins selected.");
+        return;
+      }
+      let totalCost = 0;
+      selectedSkinIds.forEach(id => {
+        const item = document.querySelector(`.market-item[data-skin-id="${id}"]`);
+        const coinPrice = parseInt(item.getAttribute('data-coin-price') || "100");
+        totalCost += coinPrice;
+      });
+      if (userCoins >= totalCost) {
+        userCoins -= totalCost;
+        localStorage.setItem(getCoinKey(), userCoins.toString());
+        updateUserCurrency();
+        selectedSkinIds.forEach(id => saveUserSkin(id));
+        updateMarketplaceUI();
+        showToast(`You bought ${selectedSkinIds.length} skins for ${totalCost} coins!`);
+        clearSelectedSkins();
+      } else {
+        showToast("Not enough coins to buy this skin.");
+      }
+    });
+    buySelectedWithNOOTBtn.addEventListener('click', async () => {
+  const selectedSkinIds = getSelectedSkins();
+  if (selectedSkinIds.length === 0) {
+    return showToast("No skins selected.");
+  }
+
+  // ─── sum up the NOOT cost ───
+  let totalCost = 0;
+  for (let id of selectedSkinIds) {
+    const item = document.querySelector(`.market-item[data-skin-id="${id}"]`);
+    const nootPrice = parseInt(item.getAttribute('data-noot-price'), 10);
+    totalCost += nootPrice;
+  }   // ← properly close the for‑loop here
+
+  // ─── now check balance & do the rest ───
+  if (userTokens >= totalCost) {
+    // Step 3: build, sign & send burn tx
+    const amount = ethers.utils.parseUnits(totalCost.toString(), 18);
+    try {
+      const tx = await nootContract.transfer(BURN_ADDRESS, amount);
+      await tx.wait();
+      // Step 4: update UI & unlock
+      userTokens -= totalCost;
+      updateUserCurrency();
+      selectedSkinIds.forEach(id => saveUserSkin(id));
+      updateMarketplaceUI();
+      playConfettiAnimation();
+      showToast(`You bought ${selectedSkinIds.length} skins for ${totalCost} NOOT!`);
+      clearSelectedSkins();
+    } catch(err) {
+      console.error(err);
+      showToast("Transaction failed or was rejected.");
+    }
+  } else {
+    showToast("Not enough $NOOT to buy this skin.");
+  }
+});  // ← now correctly closes the click‑handler
+    openMarketplaceBtn.addEventListener('click', () => {
+      if (!walletConnected) {
+        showToast("Please connect your wallet first to access the marketplace.");
+        return;
+      }
+      document.querySelectorAll('.market-item.selected').forEach(item => {
+    item.classList.remove('selected');
+    item.querySelector('.select-skin').checked = false;
+  });
+      marketplacePage.style.display = 'flex';
+      balanceSidebar.style.display = 'block';
+      updateMarketplaceUI();
+      updateUserCurrency();
+    });
+    closeMarketplaceBtn.addEventListener('click', () => {
+      marketplacePage.style.display = 'none';
+      balanceSidebar.style.display = 'none';
+    });
+
+    // ------------------------- Confetti Animation Function -------------------------
+    function playConfettiAnimation() {
+      let confettiContainer = document.createElement('div');
+      confettiContainer.style.position = 'fixed';
+      confettiContainer.style.top = '0';
+      confettiContainer.style.left = '0';
+      confettiContainer.style.width = '100%';
+      confettiContainer.style.height = '100%';
+      confettiContainer.style.pointerEvents = 'none';
+      confettiContainer.style.zIndex = '100';
+      document.body.appendChild(confettiContainer);
+      
+      for (let i = 0; i < 100; i++) {
+        let confetti = document.createElement('div');
+        confetti.style.position = 'absolute';
+        confetti.style.width = '8px';
+        confetti.style.height = '8px';
+        confetti.style.backgroundColor = `hsl(${Math.floor(Math.random()*360)}, 100%, 50%)`;
+        confetti.style.top = '-10px';
+        confetti.style.left = `${Math.random()*100}%`;
+        confetti.style.opacity = Math.random();
+        confetti.style.transform = `rotate(${Math.random()*360}deg)`;
+        confetti.style.animation = `fall ${2 + Math.random() * 2}s linear forwards`;
+        confettiContainer.appendChild(confetti);
+      }
+      
+      setTimeout(() => {
+        document.body.removeChild(confettiContainer);
+      }, 5000);
+    }
+
+    // ------------------------- Game Key Management -------------------------
+    const keys = {};
+    document.addEventListener('keydown', e => {
+      if (["Enter", "Space", "ShiftLeft", "ShiftRight"].includes(e.code)) {
+        e.preventDefault();
+      }
+      keys[e.code] = true;
+      if ((gameState === "waiting" || gameState === "gameover") && e.code === "Enter") {
+        bgAudio.muted = false;
+    bgAudio.volume = 0.5;
+    if (!isMuted) {
+      }
+        initGame();
+        return;
+      }
+      if (gameState === "collision") return;
+    });
+    document.addEventListener('keyup', e => { keys[e.code] = false; });
+    window.addEventListener('blur', () => {
+      for (let code in keys) {
+        keys[code] = false;
+      }
+      if (gameState === "playing" && player.ducking) {
+        releaseDuck();
+      }
+    });
+    document.getElementById('jumpTouch').addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (player.onGround) {
+    // replicate Space‐key logic:
+    keys['Space'] = true;
+    handleInput();   // call your input handler immediately
+    keys['Space'] = false;
+  }
+});
+document.getElementById('duckTouch').addEventListener('touchstart', e => {
+  e.preventDefault();
+  keys['ShiftLeft'] = true;
+  handleInput();
+});
+document.getElementById('duckTouch').addEventListener('touchend', e => {
+  e.preventDefault();
+  keys['ShiftLeft'] = false;
+  handleInput();
+});
+
+    // ------------------ Duck/Crouch Feature (ADDED) ------------------
+    // Update the ducking behavior within the input handler.
+    function handleInput() {
+      if (keys["Space"] && player.onGround) {
+        // If jumping while ducking, release the duck state.
+        if (player.ducking) {
+          releaseDuck();
+        }
+        player.vy = -jumpForce;
+        player.onGround = false;
+      }
+      if ((keys["ShiftLeft"] || keys["ShiftRight"]) && player.onGround && !player.ducking) {
+        player.ducking = true;
+        player.height = player.duckHeight;
+        player.y = H - groundHeight - player.duckHeight;
+      } else if (!(keys["ShiftLeft"] || keys["ShiftRight"]) && player.ducking) {
+        releaseDuck();
+      }
+    }
+    // Modify the previously empty releaseDuck() to properly reset the duck state.
+    function releaseDuck() {
+      player.ducking = false;
+      player.height = player.normalHeight;
+      player.y = H - groundHeight - player.normalHeight;
+    }
+    // --------------------------------------------------------------------
+
+    function showStartOverlay() {
+      startOverlay.style.display = "flex";
+    }
+    function hideStartOverlay() {
+      startOverlay.style.display = "none";
+    }
+    function showModal(content) {
+      modalContent.innerHTML = content;
+      modalOverlay.style.display = "flex";
+    }
+    function hideModal() {
+      modalOverlay.style.display = "none";
+      modalContent.innerHTML = "";
+    }
+    function getLeaderboardHTML() {
+      const leaderboardKey = "penguinRunnerLeaderboard";
+      let leaderboard = JSON.parse(localStorage.getItem(leaderboardKey)) || [];
+      let html = "<h3>High Scores</h3><ol style='text-align:left;'>";
+      leaderboard.forEach(entry => {
+        html += `<li>${entry.name || "Anonymous"} - Total: ${entry.totalScore} (Coins: ${entry.coins}, Time: ${entry.time}s)</li>`;
+      });
+      html += "</ol>";
+      return html;
+    }
+    function isNewHighScore(totalScore) {
+      const leaderboardKey = "penguinRunnerLeaderboard";
+      let leaderboard = JSON.parse(localStorage.getItem(leaderboardKey)) || [];
+      if (leaderboard.length < 5) return true;
+      let minScore = Math.min(...leaderboard.map(entry => entry.totalScore));
+      return totalScore > minScore;
+    }
+    function saveHighScore(name, totalScore) {
+      const leaderboardKey = "penguinRunnerLeaderboard";
+      let leaderboard = JSON.parse(localStorage.getItem(leaderboardKey)) || [];
+      const entry = {
+        name: name,
+        totalScore: totalScore,
+        coins: score,
+        time: Math.floor(elapsedTime)
+      };
+      leaderboard.push(entry);
+      leaderboard.sort((a, b) => b.totalScore - a.totalScore);
+      leaderboard = leaderboard.slice(0, 5);
+      localStorage.setItem(leaderboardKey, JSON.stringify(leaderboard));
+    }
+    // ------------------------- Snow & Cloud Functions -------------------------
+    function createInitialSnowflakes() {
+      const count = 50;
+      for (let i = 0; i < count; i++) {
+        snowflakes.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          radius: Math.random() * 2 + 1,
+          speedY: Math.random() * 0.5 + 0.5,
+          speedX: Math.random() * 0.5 - 0.25
+        });
+      }
+    }
+    function updateSnowflakes() {
+      snowflakes.forEach(flake => {
+        flake.y += flake.speedY;
+        flake.x += flake.speedX;
+        if (flake.y > H) {
+          flake.y = -flake.radius;
+          flake.x = Math.random() * W;
+        }
+        if (flake.x > W || flake.x < 0) {
+          flake.x = Math.random() * W;
+        }
+      });
+    }
+    function drawSnowflakes() {
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+      snowflakes.forEach(flake => {
+        ctx.beginPath();
+        ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+    function createInitialClouds() {
+      for (let i = 0; i < 5; i++) {
+        clouds.push({
+          x: Math.random() * W,
+          y: Math.random() * (H / 2),
+          speed: 0.3 + Math.random() * 0.7,
+          radius: 20 + Math.random() * 20
+        });
+      }
+    }
+    function updateClouds() {
+      clouds.forEach(cloud => {
+        cloud.x -= cloud.speed;
+        if (cloud.x + cloud.radius * 2 < 0) {
+          cloud.x = W + cloud.radius;
+          cloud.y = Math.random() * (H / 2);
+        }
+      });
+    }
+    function drawClouds() {
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.8)";
+      clouds.forEach(cloud => {
+        ctx.beginPath();
+        ctx.arc(cloud.x, cloud.y, cloud.radius, Math.PI * 0.5, Math.PI * 1.5);
+        ctx.arc(cloud.x + cloud.radius, cloud.y - cloud.radius, cloud.radius, Math.PI, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.radius * 2, cloud.y, cloud.radius, Math.PI * 1.5, Math.PI * 0.5);
+        ctx.closePath();
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+    // ------------------------- Game Initialization -------------------------
+    function initGame() {
+      score = 0;
+      startTime = performance.now();
+      elapsedTime = 0;
+      gameSpeed = baseSpeed;
+      player.x = 100;
+      player.height = player.normalHeight;
+      player.y = H - groundHeight - player.normalHeight;
+      player.vy = 0;
+      player.onGround = true;
+      player.ducking = false;
+      obstacles = [];
+      coins = [];
+      clouds = [];
+      snowflakes = [];
+      obstacleTimer = 0;
+      coinTimer = 0;
+      createInitialClouds();
+      createInitialSnowflakes();
+      gameState = "playing";
+      hideStartOverlay();
+      hideModal();
+      restartBtn.style.display = 'none';
+      viewLeaderboardBtn.style.display = 'none';
+      requestAnimationFrame(gameLoop);
+    }
+    function handleInputWrapper() {
+      // Call our updated handleInput which now includes duck/crouch logic.
+      handleInput();
+    }
+    // ------------------------- Game Loop -------------------------
+    function gameLoop() {
+      if (gameState === "playing" || gameState === "collision") {
+        if (gameState === "playing") {
+          handleInputWrapper();
+        }
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+      }
+      persistentCoinsDisplay.innerText = userCoins;
+      if (balanceSidebar.style.display !== 'none') {
+        updateUserCurrency();
+      }
+    }
+    function update() {
+      if (gameState === "playing") {
+        elapsedTime = (performance.now() - startTime) / 1000;
+        gameSpeed = baseSpeed + 2 * (Math.exp(0.02 * elapsedTime) - 1);
+        player.y += player.vy;
+        player.vy += gravity;
+        if (player.y + player.height > H - groundHeight) {
+          player.y = H - groundHeight - player.height;
+          player.vy = 0;
+          player.onGround = true;
+        } else {
+          player.onGround = false;
+        }
+        obstacleTimer++;
+        if (obstacleTimer > 90) {
+          spawnObstacle();
+          obstacleTimer = 0;
+        }
+        obstacles.forEach(obs => {
+          obs.x -= gameSpeed;
+        });
+        obstacles = obstacles.filter(obs => obs.x + obs.width > 0);
+        coinTimer++;
+        if (coinTimer > 200) {
+          spawnCoin();
+          coinTimer = 0;
+        }
+        coins.forEach(coin => {
+          coin.x -= gameSpeed;
+          coin.angle = (coin.angle + 0.1) % (Math.PI * 2);
+        });
+        coins = coins.filter(coin => coin.x + coin.size > 0);
+        for (let obs of obstacles) {
+          if (checkCollision(player, obs)) {
+            gameoverAudio.currentTime = 0;
+            gameoverAudio.play().catch(() => {});
+            gameState = "collision";
+            collisionTimer = 140;
+          }
+        }
+        // inside update(), replace your old coin‑collision block with:
+  if (window.getComputedStyle(marketplacePage).display === 'none') {
+  for (let i = 0; i < coins.length; i++) {
+    if (checkCollision(player, coins[i])) {
+      // bump game score
+      score++;
+
+      // read, increment, and persist this wallet’s coins
+      const key = getCoinKey();
+      let totalCoins = parseInt(localStorage.getItem(key) || "0", 10) + 1;
+      localStorage.setItem(key, totalCoins.toString());
+
+      // sync in‑memory balance
+      userCoins = totalCoins;
+
+      // update both HUD and sidebar immediately
+      persistentCoinsDisplay.innerText = userCoins;
+      updateUserCurrency();
+
+      // remove the coin so it can't be re‑collected
+      coins.splice(i, 1);
+      i--;
+      coinAudio.currentTime = 0;
+coinAudio.play();
+coinAudio.volume = 0.2;
+coinAudio.currentTime = 0;
+coinAudio.play().catch(() => {});
+    }
+  }
+}
+        updateClouds();
+        updateSnowflakes();
+      } else if (gameState === "collision") {
+        collisionTimer--;
+        if (collisionTimer <= 0) {
+          gameState = "gameover";
+          handleGameOver();
+        }
+      }
+    }
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const gradient = ctx.createLinearGradient(0, 0, 0, H);
+      gradient.addColorStop(0, "#74b9ff");
+      gradient.addColorStop(1, "#dfe6e9");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
+      drawSnowflakes();
+      drawClouds();
+      ctx.fillStyle = "#ecf0f1";
+      ctx.fillRect(0, H - groundHeight, W, groundHeight);
+      obstacles.forEach(obs => {
+        if (obs.type === "low") {
+          ctx.drawImage(snowPileImg, obs.x, obs.y, obs.width, obs.height);
+        } else {
+          ctx.drawImage(icicleObsImg, obs.x, obs.y, obs.width, obs.height);
+        }
+      });
+      coins.forEach(coin => {
+        ctx.save();
+        ctx.translate(coin.x + coin.size / 2, coin.y + coin.size / 2);
+        ctx.rotate(coin.angle);
+        ctx.drawImage(coinImg, -coin.size / 2, -coin.size / 2, coin.size, coin.size);
+        ctx.restore();
+      });
+      if (gameState === "collision") {
+        ctx.globalAlpha = 0.8;
+        let jitterX = player.x + (Math.random() * 10 - 5);
+        let jitterY = player.y + (Math.random() * 10 - 5);
+        ctx.drawImage(penguinImg, jitterX, jitterY, player.width, player.height);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "red";
+        ctx.font = "bold 60px 'Luckiest Guy', cursive";
+        ctx.fillText("GAME OVER", W / 2 - 180, H / 2);
+      } else {
+        ctx.drawImage(penguinImg, player.x, player.y, player.width, player.height);
+      }
+      if (gameState === "playing") {
+        ctx.fillStyle = "#2c3e50";
+        ctx.font = "22px sans-serif";
+        ctx.fillText("Coins: " + score, 20, 80);
+        ctx.fillText("Time: " + Math.floor(elapsedTime) + " s", 20, 105);
+      }
+    }
+    function spawnObstacle() {
+      const type = Math.random() < 0.5 ? "low" : "high";
+      let obs = { x: W, type: type };
+      if (type === "low") {
+        obs.width = 40;
+        obs.height = 50 + Math.random() * 30;
+        let spriteOffset = 5;
+        obs.y = H - groundHeight - obs.height + spriteOffset;
+      } else {
+        obs.width = 40;
+        obs.height = 50;
+        obs.y = 280 - obs.height;
+      }
+      obstacles.push(obs);
+    }
+    function spawnCoin() {
+      const size = 40;
+      let coin = {
+        x: W,
+        y: Math.random() * (H - groundHeight - size - 50) + 50,
+        size: size,
+        angle: 0
+      };
+      coins.push(coin);
+    }
+    function checkCollision(rect1, rect2) {
+      const r2Width = rect2.width || rect2.size;
+      const r2Height = rect2.height || rect2.size;
+      return (
+        rect1.x < rect2.x + r2Width &&
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + r2Height &&
+        rect1.y + rect1.height > rect2.y
+      );
+    }
+    function handleGameOver() {
+  const totalScore = score + Math.floor(elapsedTime);
+  let content = `
+    <h2>GAME OVER</h2>
+    <p>Time Survived: ${Math.floor(elapsedTime)} s</p>
+    <p>Coins Collected This Game: ${score}</p>
+    <p>Total Score: ${totalScore}</p>
+  `;
+
+  if (isNewHighScore(totalScore)) {
+    gameoverAudio.currentTime = 0;
+    playConfettiAnimation(); // ← NEW: show confetti on qualifying for high score
+    gameState = "newHighScore";
+    content += `
+      <p>🎉 New High Score! 🎉<br>Enter your display name:</p>
+      <input type="text" id="displayName" placeholder="Your Name" />
+      <button id="submitScore">Submit Score</button>
+    `;
+  } else {
+    gameState = "gameover";
+    content += `<p>Press ENTER to Restart</p>`;
+  }
+
+  content += getLeaderboardHTML();
+  showModal(content);
+  restartBtn.style.display = 'inline-block';
+  viewLeaderboardBtn.style.display = 'inline-block';
+
+  if (gameState === "newHighScore") {
+    setTimeout(() => {
+      const submitBtn = document.getElementById('submitScore');
+      if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+          const displayName = document.getElementById('displayName').value || "Anonymous";
+          saveHighScore(displayName, totalScore);
+          let newContent = `
+            <h2>GAME OVER</h2>
+            <p>Time Survived: ${Math.floor(elapsedTime)} s</p>
+            <p>Coins Collected This Game: ${score}</p>
+            <p>Total Score: ${totalScore}</p>
+            <p>Press ENTER to Restart</p>
+          `;
+          newContent += getLeaderboardHTML();
+          gameState = "gameover";
+          showModal(newContent);
+        });
+      }
+    }, 50);
+  }
+}
+    restartBtn.addEventListener('click', () => {
+      initGame();
+    });
+    viewLeaderboardBtn.addEventListener('click', () => {
+      const content = `<h2>High Score Leaderboard</h2>` + getLeaderboardHTML() + `<p><button id="closeModalBtn">Close</button></p>`;
+      showModal(content);
+      setTimeout(() => {
+        const closeBtn = document.getElementById('closeModalBtn');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            hideModal();
+          });
+        }
+      }, 50);
+    });
+    // ─── Mobile instructions toggle ───
+const infoBtn      = document.getElementById('showInstructionsBtn');
+const overlay      = document.getElementById('instructionsOverlay');
+const closeInfoBtn = document.getElementById('closeInstructionsBtn');
+
+infoBtn.addEventListener('click', () => {
+  overlay.style.display = 'flex';
+});
+closeInfoBtn.addEventListener('click', () => {
+  overlay.style.display = 'none';
+});
+// ensure flex centering
+overlay.style.display = 'none';
+overlay.style.flexDirection = 'column';
+
+    // Start up
+    showStartOverlay();
+    initializeMarketplaceItems();
+
+    /***************************************************************************
+     *                           NEW SKINS FUNCTIONALITY
+     ***************************************************************************/
+    // Define all skins available (including the default skin)
+    const allSkins = [
+      { id: "default", name: "Default", img: "assets/penguin.png" },
+      { id: "skin1", name: "Duck", img: "assets/skins/skin1.png" },
+      { id: "skin2", name: "Frog", img: "assets/skins/skin2.png" },
+      { id: "skin3", name: "Cat", img: "assets/skins/skin3.png" },
+      { id: "skin4", name: "Bunny", img: "assets/skins/skin4.png" },
+      { id: "skin5", name: "Bear", img: "assets/skins/skin5.png" },
+      { id: "skin6", name: "Bull", img: "assets/skins/skin6.png" },
+      { id: "skin7", name: "Tiger", img: "assets/skins/skin7.png" },
+      { id: "skin8", name: "Shark", img: "assets/skins/skin8.png" },
+      { id: "skin9", name: "Vacation", img: "assets/skins/skin9.png" },
+      { id: "skin10", name: "Clown", img: "assets/skins/skin10.png" },
+      { id: "skin11", name: "Dino", img: "assets/skins/skin11.png" },
+      { id: "skin12", name: "Keeper", img: "assets/skins/skin12.png" },
+      { id: "skin13", name: "McDonalds", img: "assets/skins/skin13.png" },
+      { id: "skin14", name: "FBI", img: "assets/skins/skin14.png" },
+      { id: "skin15", name: "President", img: "assets/skins/skin15.png" },
+      { id: "skin16", name: "Knight", img: "assets/skins/skin16.png" },
+      { id: "skin17", name: "Hero", img: "assets/skins/skin17.png" },
+      { id: "skin18", name: "Robot", img: "assets/skins/skin18.png" },
+      { id: "skin19", name: "Alien", img: "assets/skins/skin19.png" },
+      { id: "skin20", name: "Dragon", img: "assets/skins/skin20.png" },
+      { id: "skin21", name: "King", img: "assets/skins/skin21.png" },
+      { id: "skin22", name: "Diamond", img: "assets/skins/skin22.png" },
+      { id: "skin23", name: "Abstract", img: "assets/skins/skin23.png" }
+    ];
+
+    // Build the Skins UI grid using unlocked skins (plus default always available)
+    function initializeSkinsUI() {
+      skinsGrid.innerHTML = "";
+      let unlocked = loadUserSkins();
+      if (!unlocked.includes("default")) {
+        unlocked.push("default");
+      }
+      allSkins.forEach(skin => {
+        if (unlocked.includes(skin.id)) {
+          const skinDiv = document.createElement('div');
+          skinDiv.className = "skin-item";
+          skinDiv.setAttribute("data-skin-id", skin.id);
+          skinDiv.innerHTML = `
+            <img src="${skin.img}" alt="${skin.name}" />
+            <div class="skin-info">
+              <p class="name">${skin.name}</p>
+              <button class="wear-btn">Wear Skin</button>
+            </div>
+          `;
+          skinDiv.querySelector('.wear-btn').addEventListener('click', () => {
+            currentSkin = skin.id;
+            penguinImg.src = skin.img;
+            saveLastSkin(skin.id);
+            showToast(`
+  <img src="${skin.img}" alt="${skin.name}" class="prize-thumb">
+  Now wearing the ${skin.name} skin!
+`);
+            skinsPage.style.display = "none";
+          });
+          skinsGrid.appendChild(skinDiv);
+        }
+      });
+    }
+
+    // Event listeners for Skins overlay buttons
+    openSkinsBtn.addEventListener('click', () => {
+      if (!walletConnected) {
+        showToast("Please connect your wallet first to access your skins.");
+        return;
+      }
+      initializeSkinsUI();
+      skinsPage.style.display = "flex";
+    });
+    closeSkinsBtn.addEventListener('click', () => {
+      skinsPage.style.display = "none";
+    });
+
+    /***************************************************************************
+     *                CLICK-OUTSIDE TO CLOSE MARKETPLACE & SKINS               *
+     *  For the marketplace, the safe zones are the marketplace container and *
+     *  the balance sidebar. For skins, the safe zone is the skins container.  *
+     ***************************************************************************/
+    document.addEventListener('click', function(event) {
+      // Do nothing if the event originated from the open buttons.
+      if (event.target.closest('#openMarketplaceBtn') || event.target.closest('#openSkinsBtn')) {
+        return;
+      }
+      // Marketplace overlay is visible
+      if (marketplacePage.style.display === 'flex') {
+        if (!event.target.closest('.marketplace-container') && !event.target.closest('#balanceSidebar')) {
+          marketplacePage.style.display = 'none';
+          balanceSidebar.style.display = 'none';
+        }
+      }
+      // Skins overlay is visible
+      if (skinsPage.style.display === 'flex') {
+        if (!event.target.closest('.skins-container')) {
+          skinsPage.style.display = 'none';
+        }
+      }
+    });
+    // Audio toggle logic
+    const audioToggle = document.getElementById('audioToggle');
+const allAudio     = Array.from(document.querySelectorAll('audio'));
+let   isMuted      = true;  // start muted
+
+function updateAudioState() {
+  allAudio.forEach(a => {
+    if (isMuted) {
+      a.muted = true;
+      a.pause();
+      a.currentTime = 0;    // reset so no ghost plays
+    } else {
+      a.muted = false;
+      if (a.id === 'bgAudio') {
+        a.play().catch(()=>{});  // only bgAudio should auto‑start
+      }
+    }
+  });
+
+  audioToggle.src = isMuted
+    ? 'assets/audioMutedW.png'
+    : 'assets/audioLoudW.png';
+}
+
+// initialize UI
+updateAudioState();
+
+audioToggle.addEventListener('click', () => {
+  isMuted = !isMuted;
+  updateAudioState();
+});
+  </script>
+</body>
+</html>
